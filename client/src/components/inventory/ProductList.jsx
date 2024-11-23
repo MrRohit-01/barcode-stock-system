@@ -8,8 +8,9 @@ import {
   Card,
   Button 
 } from '@mantine/core';
-import { productAPI } from '../../services/api';
+import api from '../../api/api';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 
 const ProductList = () => {
   const [products, setProducts] = useState([]);
@@ -23,11 +24,12 @@ const ProductList = () => {
 
   const loadProducts = async () => {
     try {
-      const response = await productAPI.getAll();
+      const response = await api.get('/products');
       setProducts(response.data);
+      setLoading(false);
     } catch (error) {
       console.error('Failed to load products:', error);
-    } finally {
+      toast.error('Failed to load products');
       setLoading(false);
     }
   };

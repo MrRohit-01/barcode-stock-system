@@ -28,7 +28,7 @@ router.post('/register', async (req, res) => {
     );
 
     res.status(201).json({
-      token,
+      token: token,
       user: {
         id: user._id,
         username: user.username,

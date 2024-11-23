@@ -61,4 +61,18 @@ router.get('/low-stock', auth, authorize(['admin', 'staff']), async (req, res) =
   }
 });
 
+router.get('/movements/:productId', auth, async (req, res) => {
+  try {
+    const movements = await InventoryMovement.find({ 
+      product: req.params.productId 
+    })
+    .populate('user', 'name')
+    .sort('-date');
+    
+    res.json(movements);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching inventory movements' });
+  }
+});
+
 module.exports = router;

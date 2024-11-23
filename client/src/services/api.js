@@ -1,47 +1,118 @@
 import axios from 'axios';
 
+const API_URL = 'http://localhost:5000/api';
+
+// Create axios instance with default config
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
+  baseURL: API_URL,
+  headers: {
+    'Content-Type': 'application/json'
+  }
 });
 
+// Add token to requests
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
+}, (error) => {
+  return Promise.reject(error);
 });
 
-export const authAPI = {
-  login: (credentials) => api.post('/auth/login', credentials),
-  register: (userData) => api.post('/auth/register', userData),
+// Auth Service
+const authService = {
+  async login(credentials) {
+    const response = await api.post('/auth/login', credentials);
+    return response.data;
+  },
+  
+  async register(userData) {
+    const response = await api.post('/auth/register', userData);
+    return response.data;
+  }
 };
 
-export const productAPI = {
-  getAll: () => api.get('/products'),
-  getByBarcode: (barcode) => api.get(`/products/barcode/${barcode}`),
-  getProduct: async (barcode) => {
+// Product Service
+const productService = {
+  async getAllProducts() {
+    const response = await api.get('/products');
+    return response.data;
+  },
+  
+  async getProductByBarcode(barcode) {
+    const response = await api.get(`/products/barcode/${barcode}`);
+    return response.data;
+  },
+  
+  async getProductById(id) {
+    const response = await api.get(`/products/${id}`);
+    return response.data;
+  },
+  
+  async create(productData) {
     try {
-      const response = await api.get(`/products/${barcode}`);
+      const response = await api.post('/products', productData);
       return response.data;
     } catch (error) {
-      throw new Error(error.response?.data?.message || 'Product not found');
+      console.error('API Error:', error.response?.data);
+      throw error;
     }
   },
-  create: (productData) => api.post('/products', productData),
-  update: (id, productData) => api.put(`/products/${id}`, productData),
+  
+  async updateProduct(id, productData) {
+    const response = await api.put(`/products/${id}`, productData);
+    return response.data;
+  },
+  
+  async deleteProduct(id) {
+    const response = await api.delete(`/products/${id}`);
+    return response.data;
+  }
 };
 
-export const inventoryAPI = {
-  addMovement: (movementData) => api.post('/inventory/movement', movementData),
-  getMovements: () => api.get('/inventory/movements'),
-  getLowStock: () => api.get('/inventory/low-stock'),
+// Inventory Service
+const inventoryService = {
+  async addMovement(movementData) {
+    const response = await api.post('/inventory/movement', movementData);
+    return response.data;
+  },
+  
+  async getMovements() {
+    const response = await api.get('/inventory/movements');
+    return response.data;
+  },
+  
+  async getLowStock() {
+    const response = await api.get('/inventory/low-stock');
+    return response.data;
+  }
 };
 
-export const billingAPI = {
-  createTransaction: (transactionData) => api.post('/billing/transaction', transactionData),
-  getAllTransactions: () => api.get('/billing/transactions'),
-  getTransactionById: (transactionId) => api.get(`/billing/transaction/${transactionId}`),
+// Billing Service
+const billingService = {
+  async createTransaction(transactionData) {
+    const response = await api.post('/billing/transaction', transactionData);
+    return response.data;
+  },
+  
+  async getAllTransactions() {
+    const response = await api.get('/billing/transactions');
+    return response.data;
+  },
+  
+  async getTransactionById(id) {
+    const response = await api.get(`/billing/transaction/${id}`);
+    return response.data;
+  }
+};
+
+export {
+  authService,
+  productService,
+  inventoryService,
+  billingService
 };
 
 export default api; 

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { inventoryService } from '../../services/api.js';
 import { 
   Table, 
   Card, 
@@ -7,7 +8,6 @@ import {
   Badge,
   Stack 
 } from '@mantine/core';
-import { inventoryAPI } from '../../services/api';
 
 const InventoryMovements = () => {
   const [movements, setMovements] = useState([]);
@@ -20,7 +20,7 @@ const InventoryMovements = () => {
 
   const loadMovements = async () => {
     try {
-      const response = await inventoryAPI.getMovements();
+      const response = await inventoryService.getMovements();
       setMovements(response.data);
     } catch (err) {
       setError(err.message);
@@ -30,7 +30,7 @@ const InventoryMovements = () => {
   };
 
   if (loading) return <Text>Loading...</Text>;
-  if (error) return <Text color="red">{error}</Text>;
+  if (error) return <Text text-color="red">{error}</Text>;
 
   return (
     <Stack>

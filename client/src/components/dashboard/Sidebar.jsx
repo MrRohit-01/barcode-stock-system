@@ -1,4 +1,3 @@
-
 import { Link, useNavigate } from 'react-router-dom';
 import { 
   HomeIcon, 
@@ -6,7 +5,8 @@ import {
   ClipboardDocumentListIcon,
   ShoppingCartIcon,
   CurrencyDollarIcon,
-  ArrowLeftOnRectangleIcon 
+  ArrowLeftOnRectangleIcon,
+  PlusIcon
 } from '@heroicons/react/24/outline';
 import { useAuthStore } from '../../stores/authStore';
 
@@ -20,6 +20,7 @@ const Sidebar = () => {
     { title: 'Inventory', icon: ClipboardDocumentListIcon, path: '/dashboard/inventory' },
     { title: 'Cart', icon: ShoppingCartIcon, path: '/dashboard/cart' },
     { title: 'Billing', icon: CurrencyDollarIcon, path: '/dashboard/checkout' },
+    { title: 'Add Product', icon: PlusIcon, path: '/dashboard/products/add' },
   ];
 
   const handleLogout = () => {

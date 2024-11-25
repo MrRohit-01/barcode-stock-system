@@ -3,8 +3,9 @@ import Sidebar from './Sidebar';
 import Products from '../../pages/Products/Products';
 import AddProduct from '../../pages/Products/AddProduct';
 import { Outlet } from 'react-router-dom';
+import { memo } from 'react';
 
-const DashboardLayout = () => {
+const DashboardLayout = memo(() => {
   return (
     <div className="flex">
       <Sidebar />
@@ -18,6 +19,6 @@ const DashboardLayout = () => {
       </main>
     </div>
   );
-};
+});
 
 export default DashboardLayout; 

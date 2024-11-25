@@ -1,25 +1,25 @@
+import React, { Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import DashboardLayout from './components/dashboard/DashboardLayout';
-import Dashboard from './components/dashboard/Dashboard';
-import Login from './components/auth/Login';
-import Register from './components/auth/Register';
-import ProtectedRoute from './components/auth/ProtectedRoute';
-import PublicRoute from './components/auth/PublicRoute';
-import BarcodeScanner from './components/scanner/BarcodeScanner';
-import ProductDetails from './components/products/ProductDetails';
-import InventoryMovements from './components/inventory/inventoryMovements';
-import ProductList from './components/inventory/ProductList';
-import Cart from './components/billing/Cart';
-import Checkout from './components/billing/Checkout';
-import { ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-import AddProduct from './pages/Products/AddProduct';
-import EditProduct from './components/products/EditProduct';
 import { MantineProvider } from '@mantine/core';
-import '@mantine/core/styles.css';
 import { Toaster } from 'react-hot-toast';
-import Products from './pages/Products/Products';
-import TransactionList from './pages/Transactions/TransactionList.jsx';
+import { ToastContainer } from 'react-toastify';
+import PublicRoute from './components/auth/PublicRoute';
+import ProtectedRoute from './components/auth/ProtectedRoute';
+import DashboardLayout from './components/dashboard/DashboardLayout';
+import SuspenseWrapper from './components/common/SuspenseWrapper';
+
+// Lazy load components
+const Login = lazy(() => import('./components/auth/Login'));
+const Register = lazy(() => import('./components/auth/Register'));
+const Dashboard = lazy(() => import('./components/dashboard/Dashboard'));
+const BarcodeScanner = lazy(() => import('./components/scanner/BarcodeScanner'));
+const Cart = lazy(() => import('./components/billing/Cart'));
+const Checkout = lazy(() => import('./components/billing/Checkout'));
+const InventoryMovements = lazy(() => import('./components/inventory/InventoryMovements'));
+const Products = lazy(() => import('./pages/Products/Products'));
+const EditProduct = lazy(() => import('./components/products/EditProduct'));
+const ProductDetails = lazy(() => import('./components/products/ProductDetails'));
+const TransactionList = lazy(() => import('./pages/Transactions/TransactionList'));
 
 function App() {
   return (
@@ -29,51 +29,89 @@ function App() {
         theme={{
           colorScheme: 'light',
           primaryColor: 'indigo',
-          // other theme customizations
         }}
       >
-        <ToastContainer
-          position="top-right"
-          autoClose={3000}
-          hideProgressBar={false}
-          closeOnClick
-          pauseOnHover
-        />
+        <ToastContainer />
         <BrowserRouter>
-          <Routes>
-            {/* Public routes */}
-            <Route path="/" element={
-              <PublicRoute>
-                <Login />
-              </PublicRoute>
-            } />
-            <Route path="/login" element={
-              <PublicRoute>
-                <Login />
-              </PublicRoute>
-            } />
-            <Route path="/register" element={
-              <PublicRoute>
-                <Register />
-              </PublicRoute>
-            } />
+          <SuspenseWrapper>
+            <Routes>
+              {/* Public routes */}
+              <Route path="/" element={
+                <PublicRoute>
+                  <SuspenseWrapper>
+                    <Login />
+                  </SuspenseWrapper>
+                </PublicRoute>
+              } />
+              <Route path="/login" element={
+                <PublicRoute>
+                  <SuspenseWrapper>
+                    <Login />
+                  </SuspenseWrapper>
+                </PublicRoute>
+              } />
+              <Route path="/register" element={
+                <PublicRoute>
+                  <SuspenseWrapper>
+                    <Register />
+                  </SuspenseWrapper>
+                </PublicRoute>
+              } />
 
-            {/* Protected routes */}
-            <Route path="/dashboard/*" element={
-              <ProtectedRoute>
-                <DashboardLayout />
-              </ProtectedRoute>
-            }>
-              <Route index element={<Dashboard />} />
-              <Route path="scan" element={<BarcodeScanner />} />
+              {/* Protected routes */}
+              <Route path="/dashboard" element={
+                <ProtectedRoute>
+                  <DashboardLayout />
+                </ProtectedRoute>
+              }>
+                <Route index element={
+                  <SuspenseWrapper>
+                    <Dashboard />
+                  </SuspenseWrapper>
+                } />
+                <Route path="scan" element={
+                  <SuspenseWrapper>
+                    <BarcodeScanner />
+                  </SuspenseWrapper>
+                } />
+                <Route path="cart" element={
+                  <SuspenseWrapper>
+                    <Cart />
+                  </SuspenseWrapper>
+                } />
+                <Route path="checkout" element={
+                  <SuspenseWrapper>
+                    <Checkout />
+                  </SuspenseWrapper>
+                } />
+                <Route path="inventory" element={
+                  <SuspenseWrapper>
+                    <InventoryMovements />
+                  </SuspenseWrapper>
+                } />
+                <Route path="products" element={
+                  <SuspenseWrapper>
+                    <Products />
+                  </SuspenseWrapper>
+                } />
+                <Route path="products/edit/:id" element={
+                  <SuspenseWrapper>
+                    <EditProduct />
+                  </SuspenseWrapper>
+                } />
+                <Route path="products/:id" element={
+                  <SuspenseWrapper>
+                    <ProductDetails />
+                  </SuspenseWrapper>
+                } />
+                <Route path="transactions" element={
+                  <SuspenseWrapper>
+                    <TransactionList />
+                  </SuspenseWrapper>
+                } />
               </Route>
-              <Route path="cart" element={<Cart />} />
-              <Route path="checkout" element={<Checkout />} />
-              <Route path="inventory" element={<InventoryMovements />} />
-              <Route path="edit/:id" element={<EditProduct />} />
-              <Route path="products/:id" element={<ProductDetails />} />
-              <Route path="transactions" element={<TransactionList />} />
-          </Routes>
+            </Routes>
+          </SuspenseWrapper>
         </BrowserRouter>
       </MantineProvider>
     </>

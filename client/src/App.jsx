@@ -1,8 +1,8 @@
-import React, { Suspense, lazy } from 'react';
+import { Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { MantineProvider } from '@mantine/core';
-import { Toaster } from 'react-hot-toast';
-import { ToastContainer } from 'react-toastify';
+import { ToastContainer } from 'react-toastify'; // Import react-toastify
+import 'react-toastify/dist/ReactToastify.css'; // Import styles for react-toastify
 import PublicRoute from './components/auth/PublicRoute';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import DashboardLayout from './components/dashboard/DashboardLayout';
@@ -20,101 +20,83 @@ const Products = lazy(() => import('./pages/Products/Products'));
 const EditProduct = lazy(() => import('./components/products/EditProduct'));
 const ProductDetails = lazy(() => import('./components/products/ProductDetails'));
 const TransactionList = lazy(() => import('./pages/Transactions/TransactionList'));
+const AddProduct = lazy(() => import('./pages/Products/AddProduct'));
 
 function App() {
   return (
-    <>
-      <Toaster position="top-right" />
+  
       <MantineProvider
         theme={{
           colorScheme: 'light',
           primaryColor: 'indigo',
         }}
       >
-        <ToastContainer />
+        {/* ToastContainer for react-toastify */}
+        <ToastContainer
+          position="top-right"
+          autoClose={3000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+        />
         <BrowserRouter>
           <SuspenseWrapper>
             <Routes>
               {/* Public routes */}
-              <Route path="/" element={
-                <PublicRoute>
-                  <SuspenseWrapper>
+              <Route
+                path="/"
+                element={
+                  <PublicRoute>
                     <Login />
-                  </SuspenseWrapper>
-                </PublicRoute>
-              } />
-              <Route path="/login" element={
-                <PublicRoute>
-                  <SuspenseWrapper>
+                  </PublicRoute>
+                }
+              />
+              <Route
+                path="/login"
+                element={
+                  <PublicRoute>
                     <Login />
-                  </SuspenseWrapper>
-                </PublicRoute>
-              } />
-              <Route path="/register" element={
-                <PublicRoute>
-                  <SuspenseWrapper>
+                  </PublicRoute>
+                }
+              />
+              <Route
+                path="/register"
+                element={
+                  <PublicRoute>
                     <Register />
-                  </SuspenseWrapper>
-                </PublicRoute>
-              } />
+                  </PublicRoute>
+                }
+              />
 
               {/* Protected routes */}
-              <Route path="/dashboard" element={
-                <ProtectedRoute>
-                  <DashboardLayout />
-                </ProtectedRoute>
-              }>
-                <Route index element={
-                  <SuspenseWrapper>
-                    <Dashboard />
-                  </SuspenseWrapper>
-                } />
-                <Route path="scan" element={
-                  <SuspenseWrapper>
-                    <BarcodeScanner />
-                  </SuspenseWrapper>
-                } />
-                <Route path="cart" element={
-                  <SuspenseWrapper>
-                    <Cart />
-                  </SuspenseWrapper>
-                } />
-                <Route path="checkout" element={
-                  <SuspenseWrapper>
-                    <Checkout />
-                  </SuspenseWrapper>
-                } />
-                <Route path="inventory" element={
-                  <SuspenseWrapper>
-                    <InventoryMovements />
-                  </SuspenseWrapper>
-                } />
-                <Route path="products" element={
-                  <SuspenseWrapper>
-                    <Products />
-                  </SuspenseWrapper>
-                } />
-                <Route path="products/edit/:id" element={
-                  <SuspenseWrapper>
-                    <EditProduct />
-                  </SuspenseWrapper>
-                } />
-                <Route path="products/:id" element={
-                  <SuspenseWrapper>
-                    <ProductDetails />
-                  </SuspenseWrapper>
-                } />
-                <Route path="transactions" element={
-                  <SuspenseWrapper>
-                    <TransactionList />
-                  </SuspenseWrapper>
-                } />
+              <Route
+                path="/dashboard"
+                element={
+                  <ProtectedRoute>
+                    <DashboardLayout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route index element={<Dashboard />} />
+                <Route path="scan" element={<BarcodeScanner />} />
+                <Route path="cart" element={<Cart />} />
+                <Route path="checkout" element={<Checkout />} />
+                <Route path="inventory" element={<InventoryMovements />} />
+                <Route path="products" element={<Products />} />
+                <Route path="products/add" element={<AddProduct />} />
+                <Route path="products/edit/:id" element={<EditProduct />} />
+                <Route path="products/:id" element={<ProductDetails />} />
+                <Route path="transactions" element={<TransactionList />} />
               </Route>
             </Routes>
           </SuspenseWrapper>
         </BrowserRouter>
       </MantineProvider>
-    </>
+  
   );
 }
 

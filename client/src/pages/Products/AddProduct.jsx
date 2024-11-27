@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import Barcode from 'react-barcode';
 import { productService } from '../../services/api';
+import BarcodeScanner from '../../components/scanner/BarcodeScanner';
 
 const AddProduct = () => {
   const navigate = useNavigate();
@@ -24,6 +25,7 @@ const AddProduct = () => {
     }
   });
   const [showBarcode, setShowBarcode] = useState(false);
+  const [showScanner, setShowScanner] = useState(false);
   const barcodeRef = useRef();
 
   const handleChange = (e) => {
@@ -57,7 +59,6 @@ const AddProduct = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // Convert string values to numbers for price and stock
       const formattedData = {
         ...formData,
         price: {
@@ -71,22 +72,15 @@ const AddProduct = () => {
         }
       };
 
-      console.log('Submitting formatted data:', formattedData); // Debug log
-      
       const response = await productService.create(formattedData);
-      console.log('Response:', response); // Debug log
-      
       toast.success('Product added successfully');
       navigate('/dashboard/products');
     } catch (error) {
-      console.error('Error details:', error.response?.data || error); // More detailed error
       toast.error(error.response?.data?.message || 'Error adding product');
     }
   };
 
-  // Optimized barcode generation
   const generateBarcode = () => {
-    // Generate 12 digits (EAN-13 format without check digit)
     let code = '';
     for(let i = 0; i < 12; i++) {
       code += Math.floor(Math.random() * 10);
@@ -99,9 +93,8 @@ const AddProduct = () => {
     setShowBarcode(true);
   };
 
-  // Optimized SKU generation
   const generateSKU = () => {
-    const prefix = 'PRD'; // Fixed prefix for better readability
+    const prefix = 'PRD';
     const numbers = String(Math.floor(Math.random() * 100000)).padStart(5, '0');
     const newSKU = `${prefix}-${numbers}`;
     
@@ -111,7 +104,6 @@ const AddProduct = () => {
     }));
   };
 
-  // Print Barcode function
   const printBarcode = () => {
     const printWindow = window.open('', '', 'width=800,height=400');
     printWindow.document.write(`
@@ -120,7 +112,7 @@ const AddProduct = () => {
           <title>Print Barcode - ${formData.name || 'Product'}</title>
           <style>
             @page { 
-              size: 58mm 40mm; /* Standard label size */
+              size: 58mm 40mm;
               margin: 0;
             }
             body { 
@@ -175,6 +167,15 @@ const AddProduct = () => {
       </html>
     `);
     printWindow.document.close();
+  };
+
+  const handleBarcodeDetected = (barcode) => {
+    setFormData(prev => ({
+      ...prev,
+      barcode
+    }));
+    setShowScanner(false);
+    toast.success('Barcode added successfully!');
   };
 
   return (
@@ -246,8 +247,26 @@ const AddProduct = () => {
               >
                 Generate Barcode
               </button>
+              <button
+                type="button"
+                onClick={() => setShowScanner(true)}
+                className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+              >
+                Scan Barcode
+              </button>
             </div>
           </div>
+
+          {showScanner && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+              <div className="bg-white rounded-lg w-full max-w-xl mx-4">
+                <BarcodeScanner
+                  onBarcodeDetected={handleBarcodeDetected}
+                  onClose={() => setShowScanner(false)}
+                />
+              </div>
+            </div>
+          )}
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">

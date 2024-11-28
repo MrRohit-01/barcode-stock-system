@@ -26,13 +26,12 @@ const Products = () => {
   const fetchProducts = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await axios.get('http://localhost:5000/api/products', {
+      const response = await axios.get(`${import.meta.env.VITE_APP_URL}/products`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
       setProducts(response.data);
-      console.log(response.data)
     } catch (error) {
       toast.error('Error fetching products');
     } finally {
@@ -62,7 +61,7 @@ const Products = () => {
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this product?')) {
       try {
-        await axios.delete(`http://localhost:5000/api/products/${id}`, {
+        await axios.delete(`${import.meta.env.VITE_APP_URL}/products/${id}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -73,6 +72,13 @@ const Products = () => {
         toast.error('Error deleting product');
       }
     }
+  };
+
+  // Handle product click
+  const handleProductClick = (product) => {
+    navigate(`/dashboard/products/${product._id}`, {
+      state: { product }
+    });
   };
 
   // Render loading state
@@ -136,11 +142,15 @@ const Products = () => {
           </thead>
           <tbody className="divide-y divide-gray-200">
             {filteredProducts.map((product) => (
-              <tr key={product._id} className="hover:bg-gray-50">
+              <tr 
+                key={product._id} 
+                className="hover:bg-gray-50 cursor-pointer"
+                onClick={() => handleProductClick(product)}
+              >
                 <td className="px-6 py-4">
                   {product.image ? (
                     <img
-                      src={`http://localhost:5000${product.image}`}
+                      src={`${import.meta.env.VITE_APP_URL}${product.image}`}
                       alt={product.name}
                       className="h-12 w-12 object-cover rounded"
                     />

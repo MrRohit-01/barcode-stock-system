@@ -1,21 +1,19 @@
-import PropTypes from 'prop-types';
-import { Navigate, useLocation } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
 
 const ProtectedRoute = ({ children }) => {
-  const token = localStorage.getItem('token');
-  const { isAuthenticated } = useAuthStore();
-  const location = useLocation();
+  const { token } = useAuthStore();
 
-  if (!token || !isAuthenticated) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
-  }
-
+  // For development, temporarily bypass authentication
   return children;
-};
 
-ProtectedRoute.propTypes = {
-  children: PropTypes.node.isRequired
+  // Uncomment this when authentication is ready
+  /*
+  if (!token) {
+    return <Navigate to="/login" replace />;
+  }
+  return children;
+  */
 };
 
 export default ProtectedRoute; 

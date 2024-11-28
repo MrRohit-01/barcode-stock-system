@@ -8,32 +8,38 @@ const router = Router();
 
 router.post('/', auth, authorize(['admin', 'staff']), upload.single('image'), async (req, res) => {
   try {
-    const { name, sku, price, category, description, stockQuantity, minStockLevel } = req.body;
+    const { 
+      name, 
+      sku, 
+      barcode, 
+      price, 
+      category, 
+      description, 
+      stockQuantity, 
+      minStockLevel
+    } = req.body;
     
-    // Validate required fields
-    if (!name || !sku || !price || !category) {
-      return res.status(400).json({ message: 'Missing required fields' });
+    console.log('Received data:', req.body);
+    
+    // Validate required fields including barcode
+    if (!name || !sku || !price || !category || !barcode) {
+      return res.status(400).json({ message: 'Missing required fields (including barcode)' });
     }
 
-    // Check if product with SKU already exists
-    const existingProduct = await Product.findOne({ sku });
-    if (existingProduct) {
-      return res.status(400).json({ message: 'Product with this SKU already exists' });
+    // Check if product with barcode already exists
+    const existingBarcode = await Product.findOne({ barcode });
+    if (existingBarcode) {
+      return res.status(400).json({ message: 'Product with this barcode already exists' });
     }
-
-    const barcode = await generateBarcode(sku);
-    
-    // Structure the price object correctly
-    const priceObject = {
-      cost: price.cost,
-      retail: price.retail
-    };
     
     const product = await Product.create({
       name,
       sku,
       barcode,
-      price: priceObject,
+      price: {
+        cost: price.cost,
+        retail: price.retail
+      },
       category,
       description,
       stockQuantity: Number(stockQuantity) || 0,
@@ -116,6 +122,18 @@ router.get('/:id', auth, async (req, res) => {
     res.json(product);
   } catch (error) {
     res.status(500).json({ message: 'Error fetching product' });
+  }
+});
+
+router.get('/check-sku/:sku', auth, async (req, res) => {
+  try {
+    const product = await Product.findOne({ sku: req.params.sku });
+    if (!product) {
+      return res.status(404).json({ message: 'SKU not found' });
+    }
+    res.json({ exists: true });
+  } catch (error) {
+    res.status(500).json({ message: 'Error checking SKU' });
   }
 });
 

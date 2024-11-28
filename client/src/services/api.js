@@ -1,6 +1,7 @@
 import axios from 'axios';
+import { toast } from 'react-toastify';
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = 'https://qhkg9hgc-5000.inc1.devtunnels.ms/api';
 
 // Create axios instance with default config
 const api = axios.create({
@@ -24,98 +25,90 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Auth Service
-const authService = {
-  async login(credentials) {
-    const response = await api.post('/auth/login', credentials);
-    return response.data;
-  },
-  
-  async register(userData) {
-    const response = await api.post('/auth/register', userData);
-    return response.data;
-  }
-};
-
 // Product Service
-const productService = {
-  async getAllProducts() {
+export const productService = {
+  getAll: async () => {
     const response = await api.get('/products');
-    return response.data;
+    return response;
   },
   
-  async getProductByBarcode(barcode) {
+  getByBarcode: async (barcode) => {
     const response = await api.get(`/products/barcode/${barcode}`);
-    return response.data;
+    return response;
   },
   
-  async getProductById(id) {
+  getById: async (id) => {
     const response = await api.get(`/products/${id}`);
-    return response.data;
+    return response;
   },
   
-  async create(productData) {
-    try {
-      const response = await api.post('/products', productData);
-      return response.data;
-    } catch (error) {
-      console.error('API Error:', error.response?.data);
-      throw error;
-    }
+  create: async (data) => {
+    const response = await api.post('/products', data);
+    return response;
   },
   
-  async updateProduct(id, productData) {
-    const response = await api.put(`/products/${id}`, productData);
-    return response.data;
+  update: async (id, data) => {
+    const response = await api.put(`/products/${id}`, data);
+    return response;
   },
   
-  async deleteProduct(id) {
+  delete: async (id) => {
     const response = await api.delete(`/products/${id}`);
-    return response.data;
-  }
-};
-
-// Inventory Service
-const inventoryService = {
-  async addMovement(movementData) {
-    const response = await api.post('/inventory/movement', movementData);
-    return response.data;
+    return response;
   },
   
-  async getMovements() {
-    const response = await api.get('/inventory/movements');
-    return response.data;
-  },
-  
-  async getLowStock() {
-    const response = await api.get('/inventory/low-stock');
-    return response.data;
+  checkSKU: async (sku) => {
+    return await api.get(`/products/check-sku/${sku}`);
   }
 };
 
 // Billing Service
-const billingService = {
-  async createTransaction(transactionData) {
+export const billingService = {
+  createTransaction: async (transactionData) => {
     const response = await api.post('/billing/transaction', transactionData);
-    return response.data;
+    return response;
   },
-  
-  async getAllTransactions() {
+
+  getTransactions: async () => {
     const response = await api.get('/billing/transactions');
-    return response.data;
+    return response;
   },
-  
-  async getTransactionById(id) {
+
+  getTransactionById: async (id) => {
     const response = await api.get(`/billing/transaction/${id}`);
-    return response.data;
+    return response;
   }
 };
 
-export {
-  authService,
-  productService,
-  inventoryService,
-  billingService
+// Auth Service
+export const authService = {
+  login: async (credentials) => {
+    const response = await api.post('/auth/login', credentials);
+    return response;
+  },
+  
+  register: async (userData) => {
+    const response = await api.post('/auth/register', userData);
+    return response;
+  }
+};
+
+// Inventory Service
+export const inventoryService = {
+  addMovement: async (movementData) => {
+    const response = await api.post('/inventory/movement', movementData);
+    return response;
+  },
+  
+  getMovements: async () => {
+    const response = await api.get('/inventory/movements');
+    return response;
+  },
+  
+  getLowStock: async () => {
+    const response = await api.get('/inventory/low-stock');
+    return response;
+  }
 };
 
 export default api; 

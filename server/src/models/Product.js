@@ -61,6 +61,14 @@ const productSchema = new mongoose.Schema({
   updatedAt: {
     type: Date,
     default: Date.now
+  },
+  stockQuantity: {
+    type: Number,
+    default: 0
+  },
+  minStockLevel: {
+    type: Number,
+    default: 0
   }
 });
 

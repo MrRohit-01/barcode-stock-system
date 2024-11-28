@@ -1,17 +1,19 @@
-import { useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useRef, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import Barcode from 'react-barcode';
 import { productService } from '../../services/api';
 import BarcodeScanner from '../../components/scanner/BarcodeScanner';
+import { ClipboardDocumentListIcon } from '@heroicons/react/24/outline';
 
 const AddProduct = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [formData, setFormData] = useState({
     name: '',
     description: '',
     sku: '',
-    barcode: '',
+    barcode: location.state?.barcode || '',
     category: '',
     brand: '',
     price: {
@@ -27,6 +29,26 @@ const AddProduct = () => {
   const [showBarcode, setShowBarcode] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
   const barcodeRef = useRef();
+  const [categories] = useState([
+    'Electronics',
+    'Clothing',
+    'Food & Beverages',
+    'Books',
+    'Home & Kitchen',
+    'Sports & Outdoors',
+    'Beauty & Personal Care',
+    'Toys & Games',
+    'Automotive',
+    'Health & Wellness',
+    'Office Supplies',
+    'Pet Supplies',
+    'Tools & Home Improvement',
+    'Baby Products',
+    'Jewelry',
+    'Arts & Crafts'
+  ]);
+  const [filteredCategories, setFilteredCategories] = useState([]);
+  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -59,24 +81,77 @@ const AddProduct = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      if (!formData.barcode) {
+        toast.error('Please generate or scan a barcode first');
+        return;
+      }
+
+      // Validate required fields
+      const requiredFields = ['name', 'sku', 'category', 'price.cost', 'price.retail', 'stock.quantity'];
+      const missingFields = requiredFields.filter(field => {
+        if (field.includes('.')) {
+          const [parent, child] = field.split('.');
+          return !formData[parent][child];
+        }
+        return !formData[field];
+      });
+
+      if (missingFields.length > 0) {
+        toast.error('Please fill in all required fields');
+        return;
+      }
+
       const formattedData = {
-        ...formData,
+        name: formData.name,
+        description: formData.description,
+        sku: formData.sku,
+        barcode: formData.barcode,
+        category: formData.category,
+        brand: formData.brand,
         price: {
           cost: Number(formData.price.cost),
           retail: Number(formData.price.retail),
           wholesale: Number(formData.price.wholesale) || 0
         },
-        stock: {
-          quantity: Number(formData.stock.quantity),
-          minQuantity: Number(formData.stock.minQuantity) || 0
-        }
+        stockQuantity: Number(formData.stock.quantity),
+        minStockLevel: Number(formData.stock.minQuantity) || 0
       };
 
+      console.log('Sending data:', formattedData);
       const response = await productService.create(formattedData);
-      toast.success('Product added successfully');
-      navigate('/dashboard/products');
+      
+      if (response && response.status === 201) {
+        toast.success('Product added successfully');
+        setTimeout(() => {
+          navigate('/dashboard/products');
+        }, 1000);
+      }
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Error adding product');
+      console.error('Submit error:', error);
+      
+      if (error.response) {
+        const errorMessage = error.response.data.message || 'Error adding product';
+        toast.error(errorMessage);
+        
+        if (errorMessage.includes('barcode already exists')) {
+          setFormData(prev => ({
+            ...prev,
+            barcode: ''
+          }));
+          setShowBarcode(false);
+        }
+        
+        if (errorMessage.includes('SKU already exists')) {
+          setFormData(prev => ({
+            ...prev,
+            sku: ''
+          }));
+        }
+      } else if (error.request) {
+        toast.error('Network error. Please try again.');
+      } else {
+        toast.error('An error occurred. Please try again.');
+      }
     }
   };
 
@@ -93,15 +168,35 @@ const AddProduct = () => {
     setShowBarcode(true);
   };
 
-  const generateSKU = () => {
-    const prefix = 'PRD';
-    const numbers = String(Math.floor(Math.random() * 100000)).padStart(5, '0');
-    const newSKU = `${prefix}-${numbers}`;
-    
-    setFormData(prev => ({
-      ...prev,
-      sku: newSKU
-    }));
+  const generateSKU = async () => {
+    try {
+      let isUnique = false;
+      let newSKU = '';
+      
+      while (!isUnique) {
+        const prefix = 'PRD';
+        const numbers = String(Math.floor(Math.random() * 100000)).padStart(5, '0');
+        newSKU = `${prefix}-${numbers}`;
+        
+        // Check if SKU exists
+        try {
+          await productService.checkSKU(newSKU);
+          isUnique = true;
+        } catch (error) {
+          // If 404, SKU is unique. If other error, keep trying
+          if (error.response?.status === 404) {
+            isUnique = true;
+          }
+        }
+      }
+      
+      setFormData(prev => ({
+        ...prev,
+        sku: newSKU
+      }));
+    } catch (error) {
+      toast.error('Error generating SKU');
+    }
   };
 
   const printBarcode = () => {
@@ -177,6 +272,36 @@ const AddProduct = () => {
     setShowScanner(false);
     toast.success('Barcode added successfully!');
   };
+
+  const handleCategoryChange = (e) => {
+    const value = e.target.value;
+    handleChange(e);
+    
+    const filtered = categories.filter(category =>
+      category.toLowerCase().includes(value.toLowerCase())
+    );
+    setFilteredCategories(filtered);
+    setShowCategoryDropdown(true);
+  };
+
+  const handleCategorySelect = (category) => {
+    setFormData(prev => ({
+      ...prev,
+      category
+    }));
+    setShowCategoryDropdown(false);
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (!event.target.closest('.category-container')) {
+        setShowCategoryDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   return (
     <div className="p-6 bg-white rounded-lg shadow">
@@ -268,7 +393,7 @@ const AddProduct = () => {
             </div>
           )}
 
-          <div>
+          <div className="relative category-container">
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Category
             </label>
@@ -276,10 +401,25 @@ const AddProduct = () => {
               type="text"
               name="category"
               value={formData.category}
-              onChange={handleChange}
+              onChange={handleCategoryChange}
+              onFocus={() => setShowCategoryDropdown(true)}
               className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500"
-              placeholder="Enter category"
+              placeholder="Search or enter category"
+              autoComplete="off"
             />
+            {showCategoryDropdown && filteredCategories.length > 0 && (
+              <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+                {filteredCategories.map((category, index) => (
+                  <div
+                    key={index}
+                    className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                    onClick={() => handleCategorySelect(category)}
+                  >
+                    {category}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div>
@@ -330,35 +470,37 @@ const AddProduct = () => {
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Quantity *
-            </label>
-            <input
-              type="number"
-              name="stock.quantity"
-              value={formData.stock.quantity}
-              onChange={handleChange}
-              required
-              min="0"
-              className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500"
-              placeholder="Enter quantity"
-            />
-          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Quantity *
+              </label>
+              <input
+                type="number"
+                name="stock.quantity"
+                value={formData.stock.quantity}
+                onChange={handleChange}
+                required
+                min="0"
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500"
+                placeholder="Enter quantity"
+              />
+            </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Minimum Quantity
-            </label>
-            <input
-              type="number"
-              name="stock.minQuantity"
-              value={formData.stock.minQuantity}
-              onChange={handleChange}
-              min="0"
-              className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500"
-              placeholder="Enter minimum quantity"
-            />
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Minimum Quantity
+              </label>
+              <input
+                type="number"
+                name="stock.minQuantity"
+                value={formData.stock.minQuantity}
+                onChange={handleChange}
+                min="0"
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500"
+                placeholder="Enter minimum quantity"
+              />
+            </div>
           </div>
         </div>
 
@@ -408,6 +550,14 @@ const AddProduct = () => {
         )}
 
         <div className="flex justify-end space-x-4">
+          <button
+            type="button"
+            onClick={() => navigate('/dashboard/products')}
+            className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 inline-flex items-center gap-2"
+          >
+            <ClipboardDocumentListIcon className="w-5 h-5" />
+            View Products
+          </button>
           <button
             type="button"
             onClick={() => navigate('/dashboard/products')}

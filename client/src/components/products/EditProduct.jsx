@@ -41,7 +41,7 @@ const EditProduct = () => {
 
   const fetchProduct = async () => {
     try {
-      const response = await axios.get(`http://localhost:5000/api/products/${id}`, {
+      const response = await axios.get(`${import.meta.env.VITE_APP_URL}/products/${id}`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -86,7 +86,7 @@ const EditProduct = () => {
       }
 
       await axios.put(
-        `http://localhost:5000/api/products/${id}`,
+        `${import.meta.env.VITE_APP_URL}/products/${id}`,
         formData,
         {
           headers: {
@@ -245,7 +245,7 @@ const EditProduct = () => {
               Current Image
             </label>
             <img
-              src={`http://localhost:5000${product.image}`}
+              src={`${import.meta.env.VITE_APP_URL}${product.image}`}
               alt={product.name}
               className="h-32 w-32 object-cover rounded-lg"
             />

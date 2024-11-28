@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { toast } from 'react-hot-toast';
+import { toast } from 'react-toastify';
 import { 
   TextInput, 
   NumberInput, 
@@ -11,10 +11,13 @@ import {
   Text, 
   Group,
   ActionIcon,
-  Badge
+  Badge,
+  Modal
 } from '@mantine/core';
-import { IconTrash, IconPlus } from '@tabler/icons-react';
+import { IconTrash, IconPlus, IconBarcode, IconSearch } from '@tabler/icons-react';
 import { productService, billingService } from '../../services/api';
+import BarcodeScanner from '../scanner/BarcodeScanner';
+import ProductSearch from './ProductSearch';
 
 const Checkout = () => {
   const navigate = useNavigate();
@@ -22,6 +25,8 @@ const Checkout = () => {
   const [barcode, setBarcode] = useState('');
   const [loading, setLoading] = useState(false);
   const [total, setTotal] = useState(0);
+  const [isScannerOpen, setScannerOpen] = useState(false);
+  const [isSearchOpen, setSearchOpen] = useState(false);
   const [customerInfo, setCustomerInfo] = useState({
     name: '',
     phone: '',
@@ -36,28 +41,31 @@ const Checkout = () => {
     setTotal(newTotal);
   }, [items]);
 
-  const handleBarcodeSubmit = async (e) => {
-    e.preventDefault();
-    if (!barcode) return;
+  const handleProductAdd = async (product) => {
+    // Check if item already exists in cart
+    const existingItemIndex = items.findIndex(item => item._id === product._id);
+    
+    if (existingItemIndex > -1) {
+      // Update quantity if item exists
+      const updatedItems = [...items];
+      updatedItems[existingItemIndex].quantity += 1;
+      setItems(updatedItems);
+    } else {
+      // Add new item
+      setItems([...items, { ...product, quantity: 1 }]);
+    }
+    
+    toast.success('Product added to cart');
+  };
 
+  const handleBarcodeScanned = async (barcodeValue) => {
     try {
       setLoading(true);
-      const product = await productService.getProductByBarcode(barcode);
-      
-      // Check if item already exists in cart
-      const existingItemIndex = items.findIndex(item => item._id === product._id);
-      
-      if (existingItemIndex > -1) {
-        // Update quantity if item exists
-        const updatedItems = [...items];
-        updatedItems[existingItemIndex].quantity += 1;
-        setItems(updatedItems);
-      } else {
-        // Add new item
-        setItems([...items, { ...product, quantity: 1 }]);
+      const response = await productService.getByBarcode(barcodeValue);
+      if (response.data) {
+        handleProductAdd(response.data);
+        setScannerOpen(false);
       }
-      
-      setBarcode('');
     } catch (error) {
       toast.error('Product not found');
     } finally {
@@ -69,8 +77,12 @@ const Checkout = () => {
     if (newQuantity < 1) return;
     
     const updatedItems = [...items];
-    updatedItems[index].quantity = newQuantity;
-    setItems(updatedItems);
+    if (newQuantity <= updatedItems[index].stockQuantity) {
+      updatedItems[index].quantity = newQuantity;
+      setItems(updatedItems);
+    } else {
+      toast.error('Quantity exceeds available stock');
+    }
   };
 
   const removeItem = (index) => {
@@ -96,9 +108,10 @@ const Checkout = () => {
         total: total
       };
 
-      await billingService.createTransaction(transaction);
+      const response = await billingService.createTransaction(transaction);
       toast.success('Transaction completed successfully');
-      navigate('/dashboard/transactions');
+      // Navigate to invoice view
+      navigate(`/dashboard/invoice/${response.data._id}`);
     } catch (error) {
       toast.error('Error processing transaction');
     } finally {
@@ -112,22 +125,23 @@ const Checkout = () => {
         {/* Left Side - Cart */}
         <Grid.Col span={8}>
           <Paper shadow="xs" p="md">
-            <form onSubmit={handleBarcodeSubmit} className="mb-4">
+            <Group mb="md" position="apart">
+              <Text size="xl" weight={700}>Billing</Text>
               <Group>
-                <TextInput
-                  placeholder="Scan barcode..."
-                  value={barcode}
-                  onChange={(e) => setBarcode(e.target.value)}
-                  style={{ flex: 1 }}
-                />
                 <Button 
-                  type="submit" 
-                  loading={loading}
+                  leftIcon={<IconBarcode size={20} />}
+                  onClick={() => setScannerOpen(true)}
                 >
-                  <IconPlus size={20} />
+                  Scan Barcode
+                </Button>
+                <Button 
+                  leftIcon={<IconSearch size={20} />}
+                  onClick={() => setSearchOpen(true)}
+                >
+                  Search Products
                 </Button>
               </Group>
-            </form>
+            </Group>
 
             <Table>
               <thead>
@@ -217,6 +231,34 @@ const Checkout = () => {
           </Paper>
         </Grid.Col>
       </Grid>
+
+      {/* Barcode Scanner Modal */}
+      <Modal
+        opened={isScannerOpen}
+        onClose={() => setScannerOpen(false)}
+        title="Scan Barcode"
+        size="xl"
+      >
+        <BarcodeScanner 
+          onClose={() => setScannerOpen(false)}
+          onScan={handleBarcodeScanned}
+        />
+      </Modal>
+
+      {/* Product Search Modal */}
+      <Modal
+        opened={isSearchOpen}
+        onClose={() => setSearchOpen(false)}
+        title="Search Products"
+        size="xl"
+      >
+        <ProductSearch 
+          onProductSelect={(product) => {
+            handleProductAdd(product);
+            setSearchOpen(false);
+          }}
+        />
+      </Modal>
     </div>
   );
 };

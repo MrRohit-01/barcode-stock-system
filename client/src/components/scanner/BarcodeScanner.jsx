@@ -1,56 +1,87 @@
 import { useZxing } from "react-zxing";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { toast } from "react-toastify";
+import PropTypes from 'prop-types';
+import { useNavigate } from 'react-router-dom';
+import { productService } from '../../services/api';
 
-const BarcodeScanner = ({ onBarcodeDetected, onClose }) => {
-  const [result, setResult] = useState("");
-  const [isScanning, setIsScanning] = useState(true);
+const BarcodeScanner = ({ onClose }) => {
+  const navigate = useNavigate();
   const [error, setError] = useState(null);
-  const [hasPermission, setHasPermission] = useState(false);
+  const [isScanning, setIsScanning] = useState(true);
 
-  // Debug logging
-  useEffect(() => {
-    console.log("Scanner mounted");
-    return () => console.log("Scanner unmounted");
-  }, []);
+  const handleBarcodeScan = async (barcodeValue) => {
+    if (!barcodeValue) {
+      setIsScanning(true); // Continue scanning if no barcode
+      return;
+    }
 
-  // Check for camera permissions
-  useEffect(() => {
-    const checkPermissions = async () => {
-      try {
-        console.log("Requesting camera permissions...");
-        const stream = await navigator.mediaDevices.getUserMedia({ 
-          video: { facingMode: "environment" } 
+    try {
+      const response = await productService.getByBarcode(barcodeValue);
+      
+      // Close the scanner
+      if (onClose) onClose();
+      
+      if (response.data) {
+        // Product exists
+        toast.success('Product found! Redirecting...', {
+          position: "top-right",
+          autoClose: 2000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
         });
-        console.log("Camera permission granted");
-        setHasPermission(true);
-        // Don't stop the stream immediately
-        return () => {
-          stream.getTracks().forEach(track => track.stop());
-        };
-      } catch (err) {
-        console.error("Camera permission error:", err);
-        setError("Camera permission denied or not available");
-        setHasPermission(false);
+        
+        navigate(`/dashboard/products/${response.data._id}`, {
+          state: { product: response.data }
+        });
       }
-    };
-
-    const cleanup = checkPermissions();
-    return () => cleanup.then(cleanupFn => cleanupFn?.());
-  }, []);
+    } catch (err) {
+      console.error('API error:', err);
+      
+      // Check if it's a 404 error (product not found)
+      if (err.response?.status === 404) {
+        // Close the scanner
+        if (onClose) onClose();
+        
+        toast.info('New product detected! Opening add form...', {
+          position: "top-right",
+          autoClose: 2000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+        });
+        
+        navigate('/dashboard/products/add', {
+          state: { barcode: barcodeValue }
+        });
+      } else {
+        // For other errors, continue scanning
+        setIsScanning(true);
+        toast.error('Error checking product. Please try again.', {
+          position: "top-right",
+          autoClose: 2000,
+        });
+      }
+    }
+  };
 
   const { ref } = useZxing({
     onDecodeResult(result) {
-      console.log("Barcode detected:", result.getText());
-      const barcodeValue = result.getText();
-      setResult(barcodeValue);
-      setIsScanning(false);
-      onBarcodeDetected(barcodeValue);
-      toast.success('Barcode scanned successfully!');
+      if (isScanning) {
+        const barcodeValue = result.getText();
+        handleBarcodeScan(barcodeValue);
+      }
     },
     onError(error) {
-      console.error("Scanner error:", error);
-      setError(error.message);
+      // Only log NotFoundException, don't show to user
+      if (error.name !== 'NotFoundException') {
+        console.error("Scanner error:", error);
+      }
+      // Continue scanning regardless of error
+      setIsScanning(true);
     },
     constraints: {
       video: {
@@ -59,118 +90,68 @@ const BarcodeScanner = ({ onBarcodeDetected, onClose }) => {
         height: { min: 480, ideal: 720, max: 1080 }
       }
     },
-    timeBetweenDecodingAttempts: 500,
-    tryHarder: true,
-    formats: ["EAN_13", "EAN_8", "CODE_128", "CODE_39", "UPC_A", "UPC_E", "QR_CODE"]
+    timeBetweenDecodingAttempts: 300,
+    formats: ["EAN_13", "EAN_8", "CODE_128", "CODE_39", "UPC_A", "UPC_E"],
+    tryHarder: true
   });
 
-  // Debug video element
-  useEffect(() => {
-    if (ref.current) {
-      console.log("Video element ready");
-      ref.current.onplay = () => console.log("Video stream started");
-      ref.current.onerror = (e) => console.error("Video error:", e);
-    }
-  }, [ref]);
-
-  const resetScanner = () => {
-    console.log("Resetting scanner");
-    setResult("");
-    setIsScanning(true);
-    setError(null);
-  };
-
-  if (!hasPermission) {
-    return (
-      <div className="p-4 bg-red-50 rounded-lg">
-        <p className="text-red-600">
-          Camera access is required. Please enable camera permissions in your browser settings.
-        </p>
-        <button
-          onClick={onClose}
-          className="mt-2 px-4 py-2 bg-red-600 text-white rounded-lg"
-        >
-          Close Scanner
-        </button>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="p-4 bg-red-50 rounded-lg">
-        <p className="text-red-600">Error: {error}</p>
-        <div className="mt-4 space-x-2">
-          <button
-            onClick={resetScanner}
-            className="px-4 py-2 bg-indigo-600 text-white rounded-lg"
-          >
-            Try Again
-          </button>
-          <button
-            onClick={onClose}
-            className="px-4 py-2 bg-red-600 text-white rounded-lg"
-          >
-            Close Scanner
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="p-4 bg-gray-100 rounded-lg">
-      <div className="max-w-xl mx-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+      <div className="bg-white rounded-lg p-4 w-full max-w-xl mx-4">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-lg font-semibold">Scan Barcode</h2>
-          <button
-            onClick={onClose}
-            className="text-gray-500 hover:text-gray-700"
-          >
-            ✕
-          </button>
-        </div>
-        
-        {isScanning ? (
-          <div className="relative">
-            <video 
-              ref={ref} 
-              className="w-full rounded-lg shadow-lg"
-              style={{ maxHeight: '70vh' }}
-              autoPlay
-              playsInline
-              muted
-            />
-            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-              <div className="w-48 h-48 border-2 border-red-500 rounded-lg">
-                <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-red-500"></div>
-                <div className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-red-500"></div>
-                <div className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-red-500"></div>
-                <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-red-500"></div>
-              </div>
-            </div>
-            <p className="text-center mt-2 text-sm text-gray-600">
-              Position the barcode within the frame
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            <div className="p-4 bg-white rounded-lg shadow">
-              <p className="font-medium">Scanned Barcode:</p>
-              <p className="text-lg">{result}</p>
-            </div>
-            
+          {onClose && (
             <button
-              onClick={resetScanner}
-              className="w-full py-2 px-4 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+              onClick={onClose}
+              className="text-gray-500 hover:text-gray-700"
             >
-              Scan Again
+              ✕
             </button>
+          )}
+        </div>
+
+        <div className="relative aspect-video bg-black rounded-lg overflow-hidden">
+          <video
+            ref={ref}
+            className="w-full h-full object-cover"
+            autoPlay
+            playsInline
+            muted
+          />
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="w-64 h-32 border-2 border-red-500 rounded-lg">
+              <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-red-500"></div>
+              <div className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-red-500"></div>
+              <div className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-red-500"></div>
+              <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-red-500"></div>
+            </div>
+          </div>
+        </div>
+
+        {error && (
+          <div className="mt-4 p-3 bg-red-100 text-red-700 rounded-lg">
+            {error}
           </div>
         )}
+
+        <div className="mt-4 space-y-2">
+          <p className="text-center text-sm text-gray-600">
+            Position the barcode within the frame
+          </p>
+          <ul className="text-xs text-gray-500 list-disc pl-4">
+            <li>Hold the barcode steady</li>
+            <li>Ensure good lighting</li>
+            <li>Avoid glare or reflections</li>
+            <li>Try different distances (6-12 inches works best)</li>
+          </ul>
+        </div>
       </div>
     </div>
   );
+};
+
+BarcodeScanner.propTypes = {
+  onClose: PropTypes.func,
 };
 
 export default BarcodeScanner;

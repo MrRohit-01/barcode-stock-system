@@ -1,19 +1,16 @@
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
 
 const ProtectedRoute = ({ children }) => {
-  const { token } = useAuthStore();
+  const token = useAuthStore((state) => state.token);
+  const location = useLocation();
 
-  // For development, temporarily bypass authentication
-  return children;
-
-  // Uncomment this when authentication is ready
-  /*
   if (!token) {
-    return <Navigate to="/login" replace />;
+    // Redirect to login while saving the attempted location
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
+
   return children;
-  */
 };
 
 export default ProtectedRoute; 

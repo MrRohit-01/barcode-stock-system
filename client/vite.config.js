@@ -1,34 +1,47 @@
-import path from "path"
-import react from "@vitejs/plugin-react"
-import { defineConfig } from "vite"
-import { fileURLToPath } from "url"
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url))
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import path from 'path';
 
 export default defineConfig({
   plugins: [react()],
-  resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "./src"),
-    },
+  optimizeDeps: {
+    include: ['@heroicons/react/24/outline'],
   },
   build: {
     rollupOptions: {
       output: {
-        manualChunks: {
-          'vendor': [
-            'react',
-            'react-dom',
-            'react-router-dom',
-            '@mantine/core',
-            'axios'
-          ]
-        }
-      }
+        manualChunks: (id) => {
+          if (id.includes('node_modules')) {
+            // Group all icon-related packages together
+            if (id.includes('@heroicons/react')) {
+              return 'vendor-icons';
+            }
+            if (id.includes('react')) {
+              return 'vendor-react';
+            }
+            return 'vendor'; // all other node_modules
+          }
+          // Group by feature
+          if (id.includes('/components/dashboard/')) {
+            return 'dashboard';
+          }
+          if (id.includes('/components/products/')) {
+            return 'products';
+          }
+        },
+      },
     },
-    chunkSizeWarningLimit: 1000
   },
-  optimizeDeps: {
-    include: ['react', 'react-dom', 'react-router-dom', '@mantine/core', 'axios']
-  }
-})
+  server: {
+    // Add server configuration to handle more concurrent requests
+    maxConcurrentRequests: 500,
+    fs: {
+      strict: false
+    }
+  },
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+    },
+  },
+});

@@ -5,21 +5,34 @@ import axios from 'axios';
 
 const Login = () => {
   const navigate = useNavigate();
-  const { login, isLoading, error: storeError } = useAuthStore();
+  const { setToken, setUser } = useAuthStore();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   });
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
+    setError('');
+
     try {
-      const response = await axios.post('http://localhost:5000/api/auth/login', formData);
-      login(response.data.token);
+      const response = await axios.post(
+        `${import.meta.env.VITE_APP_URL}/auth/login`, 
+        formData
+      );
+      
+      setToken(response.data.token);
+      setUser(response.data.user);
+      
       navigate('/dashboard');
     } catch (err) {
+      console.error(err);
       setError(err.response?.data?.message || 'Login failed');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -71,8 +84,12 @@ const Login = () => {
             </div>
 
             <div>
-              <button type="submit" className="w-full btn-primary">
-                Sign in
+              <button 
+                type="submit" 
+                className="w-full btn-primary"
+                disabled={isLoading}
+              >
+                {isLoading ? 'Signing in...' : 'Sign in'}
               </button>
             </div>
           </form>

@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { productService } from '../../services/api';
-import { toast } from 'react-hot-toast';
+import { toast } from 'react-toastify';
 
 const BarcodeResult = () => {
   const navigate = useNavigate();
@@ -11,6 +11,7 @@ const BarcodeResult = () => {
   useEffect(() => {
     const checkBarcode = async () => {
       if (!barcode) {
+        toast.error('No barcode provided');
         navigate('/dashboard/products');
         return;
       }
@@ -26,13 +27,19 @@ const BarcodeResult = () => {
       } catch (error) {
         console.error('Error:', error);
         if (error.response?.status === 404) {
-          toast.info('Product not found. Add a new product.');
-          navigate('/dashboard/products/add', { 
-            state: { barcode: barcode }
+          toast.info('Product not found. Redirecting to add product...', {
+            autoClose: 2000
           });
+          setTimeout(() => {
+            navigate('/dashboard/products/add', { 
+              state: { barcode: barcode }
+            });
+          }, 2000);
         } else {
-          toast.error('Error checking barcode');
-          navigate('/dashboard/products');
+          toast.error('Error checking barcode. Please try again.');
+          setTimeout(() => {
+            navigate('/dashboard/scanner');
+          }, 2000);
         }
       }
     };
@@ -41,8 +48,9 @@ const BarcodeResult = () => {
   }, [barcode, navigate]);
 
   return (
-    <div className="flex justify-center items-center min-h-screen">
+    <div className="flex flex-col items-center justify-center min-h-screen">
       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+      <p className="mt-4 text-gray-600">Processing barcode...</p>
     </div>
   );
 };

@@ -1,99 +1,86 @@
 import { useZxing } from "react-zxing";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
-import { productService } from '../../services/api';
 
 const BarcodeScanner = ({ onClose }) => {
   const navigate = useNavigate();
-  const [error, setError] = useState(null);
   const [isScanning, setIsScanning] = useState(true);
+  const [hasPermission, setHasPermission] = useState(null);
 
-  const handleBarcodeScan = async (barcodeValue) => {
-    if (!barcodeValue) {
-      setIsScanning(true); // Continue scanning if no barcode
+  useEffect(() => {
+    // Request camera permission
+    navigator.mediaDevices.getUserMedia({ 
+      video: { facingMode: "environment" } 
+    })
+    .then(() => {
+      setHasPermission(true);
+      toast.info("Camera activated. Ready to scan.");
+    })
+    .catch((err) => {
+      console.error("Camera permission error:", err);
+      setHasPermission(false);
+      toast.error("Camera access denied. Please enable camera permissions.");
+    });
+
+    return () => setIsScanning(false);
+  }, []);
+
+  const handleBarcodeScan = (barcodeValue) => {
+    if (!barcodeValue || !isScanning) {
+      setIsScanning(true);
       return;
     }
 
-    try {
-      const response = await productService.getByBarcode(barcodeValue);
-      
-      // Close the scanner
-      if (onClose) onClose();
-      
-      if (response.data) {
-        // Product exists
-        toast.success('Product found! Redirecting...', {
-          position: "top-right",
-          autoClose: 2000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-        });
-        
-        navigate(`/dashboard/products/${response.data._id}`, {
-          state: { product: response.data }
-        });
-      }
-    } catch (err) {
-      console.error('API error:', err);
-      
-      // Check if it's a 404 error (product not found)
-      if (err.response?.status === 404) {
-        // Close the scanner
-        if (onClose) onClose();
-        
-        toast.info('New product detected! Opening add form...', {
-          position: "top-right",
-          autoClose: 2000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-        });
-        
-        navigate('/dashboard/products/add', {
-          state: { barcode: barcodeValue }
-        });
-      } else {
-        // For other errors, continue scanning
-        setIsScanning(true);
-        toast.error('Error checking product. Please try again.', {
-          position: "top-right",
-          autoClose: 2000,
-        });
-      }
-    }
+    console.log("Scanned barcode:", barcodeValue); // Debug log
+    if (onClose) onClose();
+    
+    navigate('/dashboard/scan-result', { 
+      state: { barcode: barcodeValue }
+    });
   };
 
   const { ref } = useZxing({
     onDecodeResult(result) {
-      if (isScanning) {
-        const barcodeValue = result.getText();
-        handleBarcodeScan(barcodeValue);
-      }
+      const barcodeValue = result.getText();
+      console.log("Decode result:", barcodeValue); // Debug log
+      handleBarcodeScan(barcodeValue);
     },
     onError(error) {
-      // Only log NotFoundException, don't show to user
       if (error.name !== 'NotFoundException') {
         console.error("Scanner error:", error);
+        toast.error("Scanner error. Please try again.");
       }
-      // Continue scanning regardless of error
       setIsScanning(true);
     },
     constraints: {
       video: {
         facingMode: "environment",
-        width: { min: 640, ideal: 1280, max: 1920 },
-        height: { min: 480, ideal: 720, max: 1080 }
+        width: { ideal: 1280 },
+        height: { ideal: 720 }
       }
     },
-    timeBetweenDecodingAttempts: 300,
+    timeBetweenDecodingAttempts: 200, // Faster scanning attempts
     formats: ["EAN_13", "EAN_8", "CODE_128", "CODE_39", "UPC_A", "UPC_E"],
     tryHarder: true
   });
+
+  if (hasPermission === false) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+        <div className="bg-white rounded-lg p-4">
+          <p className="text-red-500">Camera permission is required to scan barcodes.</p>
+          <button 
+            onClick={() => window.location.reload()}
+            className="mt-2 px-4 py-2 bg-blue-500 text-white rounded"
+          >
+            Retry Camera Access
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
@@ -127,12 +114,6 @@ const BarcodeScanner = ({ onClose }) => {
             </div>
           </div>
         </div>
-
-        {error && (
-          <div className="mt-4 p-3 bg-red-100 text-red-700 rounded-lg">
-            {error}
-          </div>
-        )}
 
         <div className="mt-4 space-y-2">
           <p className="text-center text-sm text-gray-600">

@@ -33,8 +33,13 @@ export const productService = {
   },
   
   getByBarcode: async (barcode) => {
-    const response = await api.get(`/products/barcode/${barcode}`);
-    return response;
+    
+      const response = await axios.get(`${import.meta.env.VITE_APP_URL}/api/products/barcode/${barcode}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      return response;
   },
   
   getById: async (id) => {

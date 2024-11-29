@@ -21,6 +21,7 @@ const InventoryMovements = lazy(() => import('./components/inventory/InventoryMo
 const BarcodeScanner = lazy(() => import('./components/scanner/BarcodeScanner'));
 const EditProduct = lazy(() => import('./components/products/EditProduct'));
 const ProductDetails = lazy(() => import('./components/products/ProductDetails'));
+const BarcodeResult = lazy(() => import('./components/scanner/BarcodeResult'));
 
 function App() {
   return (
@@ -52,6 +53,7 @@ function App() {
               } />
               <Route path="inventory" element={<InventoryMovements />} />
               <Route path="scanner" element={<BarcodeScanner />} />
+              <Route path="scan-result" element={<BarcodeResult />} />
               <Route path="cart" element={<Cart />} />
               <Route path="checkout" element={<Checkout />} />
               <Route path="invoice/:id" element={<Invoice />} />

@@ -2,10 +2,12 @@ import { useZxing } from "react-zxing";
 import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import PropTypes from 'prop-types';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
-const BarcodeScanner = ({ onClose }) => {
+const BarcodeScanner = ({ onScan, onClose }) => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const isPOS = location.pathname === '/dashboard/pos';
   const [isScanning, setIsScanning] = useState(true);
   const [hasPermission, setHasPermission] = useState(null);
 
@@ -36,9 +38,15 @@ const BarcodeScanner = ({ onClose }) => {
     console.log("Scanned barcode:", barcodeValue); // Debug log
     if (onClose) onClose();
     
-    navigate('/dashboard/scan-result', { 
-      state: { barcode: barcodeValue }
-    });
+    if (isPOS) {
+      onScan(barcodeValue);
+    } else {
+      navigate('/dashboard/barcode-result', { 
+        state: { barcode: barcodeValue }
+      });
+    }
+    
+    setIsScanning(true);
   };
 
   const { ref } = useZxing({
@@ -132,6 +140,7 @@ const BarcodeScanner = ({ onClose }) => {
 };
 
 BarcodeScanner.propTypes = {
+  onScan: PropTypes.func,
   onClose: PropTypes.func,
 };
 

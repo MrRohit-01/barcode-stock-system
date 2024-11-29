@@ -15,7 +15,7 @@ const Register = lazy(() => import('./components/auth/Register'));
 const Products = lazy(() => import('./pages/Products/Products'));
 const Transactions = lazy(() => import('./pages/Transactions/TransactionList'));
 const Cart = lazy(() => import('./components/billing/Cart'));
-const Checkout = lazy(() => import('./components/billing/Checkout'));
+const Checkout = lazy(() => import('./components/billing/POS'));
 const Invoice = lazy(() => import('./components/billing/Invoice'));
 const InventoryMovements = lazy(() => import('./components/inventory/InventoryMovements'));
 const BarcodeScanner = lazy(() => import('./components/scanner/BarcodeScanner'));
@@ -56,7 +56,7 @@ function App() {
               <Route path="scanner" element={<BarcodeScanner />} />
               <Route path="scan-result" element={<BarcodeResult />} />
               <Route path="cart" element={<Cart />} />
-              <Route path="checkout" element={<Checkout />} />
+              <Route path="pos" element={<Checkout />} />
               <Route path="invoice/:id" element={<Invoice />} />
             </Route>
           </Routes>

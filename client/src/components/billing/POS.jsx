@@ -72,10 +72,13 @@ const Checkout = () => {
       const response = await productService.getByBarcode(barcodeValue);
       if (response.data) {
         handleProductAdd(response.data);
-        setScannerOpen(false);
+        toast.success('Product added to cart');
+      } else {
+        toast.error('Product not found');
       }
     } catch (error) {
-      toast.error('Product not found');
+      console.error('Error scanning barcode:', error);
+      toast.error('Failed to find product');
     } finally {
       setLoading(false);
     }
@@ -273,7 +276,7 @@ const Checkout = () => {
         }}
       >
         <div className="flex flex-col items-center">
-          <div className="w-full max-w-2xl aspect-video mb-4">
+          <div className="w-full w-2xl aspect-video mb-4">
             <BarcodeScanner 
               onClose={() => setScannerOpen(false)}
               onScan={handleBarcodeScanned}

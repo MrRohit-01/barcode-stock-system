@@ -12,9 +12,10 @@ const api = axios.create({
   }
 });
 
-// Add token to requests without causing re-renders
-const getToken = () => localStorage.getItem('token');
+// Update token getter to use Zustand
+const getToken = () => useAuthStore.getState().token;
 
+// Update interceptor to use Zustand token
 api.interceptors.request.use(
   (config) => {
     const token = getToken();
@@ -26,6 +27,18 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+// Add response interceptor for auth errors
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      useAuthStore.getState().logout(); // Clear auth state on 401
+      toast.error('Session expired. Please login again.');
+    }
+    return Promise.reject(error);
+  }
+);
+
 // Product Service
 export const productService = {
   getAll: async () => {
@@ -34,13 +47,8 @@ export const productService = {
   },
   
   getByBarcode: async (barcode) => {
-    
-      const response = await axios.get(`${import.meta.env.VITE_APP_URL}/api/products/barcode/${barcode}`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-      return response;
+    const response = await api.get(`/products/barcode/${barcode}`);
+    return response;
   },
   
   getById: async (id) => {
@@ -64,7 +72,8 @@ export const productService = {
   },
   
   checkSKU: async (sku) => {
-    return await api.get(`/products/check-sku/${sku}`);
+    const response = await api.get(`/products/check-sku/${sku}`);
+    return response;
   }
 };
 
@@ -89,13 +98,35 @@ export const billingService = {
 // Auth Service
 export const authService = {
   login: async (credentials) => {
-    const response = await api.post('/auth/login', credentials);
-    return response;
+    try {
+      const response = await api.post('/auth/login', credentials);
+      if (response.data?.token) {
+        useAuthStore.getState().setToken(response.data.token);
+        useAuthStore.getState().setUser(response.data.user);
+      }
+      return response;
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Login failed');
+      throw error;
+    }
   },
   
   register: async (userData) => {
-    const response = await api.post('/auth/register', userData);
-    return response;
+    try {
+      const response = await api.post('/auth/register', userData);
+      if (response.data?.token) {
+        useAuthStore.getState().setToken(response.data.token);
+        useAuthStore.getState().setUser(response.data.user);
+      }
+      return response;
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Registration failed');
+      throw error;
+    }
+  },
+
+  logout: () => {
+    useAuthStore.getState().logout();
   }
 };
 

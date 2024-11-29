@@ -2,14 +2,19 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   HomeIcon,
   CubeIcon,
-  ShoppingCartIcon,
   DocumentTextIcon,
   QrCodeIcon,
   TruckIcon,
   UsersIcon,
   Cog6ToothIcon,
   ArrowRightOnRectangleIcon,
-  ChartBarIcon
+  ChartBarIcon,
+  CurrencyDollarIcon,
+  TagIcon,
+  UserGroupIcon,
+  ArrowUturnLeftIcon,
+  ChartPieIcon,
+  ClipboardDocumentListIcon
 } from '@heroicons/react/24/outline';
 import { useAuthStore } from '../../stores/authStore';
 
@@ -23,29 +28,39 @@ const Sidebar = () => {
       section: 'Main',
       items: [
         { path: '/dashboard', icon: HomeIcon, label: 'Dashboard' },
-        { path: '/dashboard/cart', icon: ShoppingCartIcon, label: 'New Sale' },
+        { path: '/dashboard/pos', icon: CurrencyDollarIcon, label: 'Point of Sale' },
       ]
     },
     {
       section: 'Inventory',
       items: [
         { path: '/dashboard/products', icon: CubeIcon, label: 'Products' },
+        { path: '/dashboard/categories', icon: TagIcon, label: 'Categories' },
         { path: '/dashboard/inventory', icon: TruckIcon, label: 'Stock Movement' },
         { path: '/dashboard/scanner', icon: QrCodeIcon, label: 'Scan Products' },
       ]
     },
     {
-      section: 'Reports',
+      section: 'Sales',
       items: [
         { path: '/dashboard/transactions', icon: DocumentTextIcon, label: 'Transactions' },
-        { path: '/dashboard/reports', icon: ChartBarIcon, label: 'Reports' },
+        { path: '/dashboard/customers', icon: UserGroupIcon, label: 'Customers' },
+        { path: '/dashboard/returns', icon: ArrowUturnLeftIcon, label: 'Returns' },
       ]
     },
     {
-      section: 'Administration',
+      section: 'Reports',
+      items: [
+        { path: '/dashboard/reports/sales', icon: ChartBarIcon, label: 'Sales Reports' },
+        { path: '/dashboard/reports/inventory', icon: ChartPieIcon, label: 'Inventory Reports' },
+      ]
+    },
+    {
+      section: 'Settings',
       items: [
         { path: '/dashboard/users', icon: UsersIcon, label: 'Users' },
         { path: '/dashboard/settings', icon: Cog6ToothIcon, label: 'Settings' },
+        { path: '/dashboard/audit-logs', icon: ClipboardDocumentListIcon, label: 'Audit Logs' },
       ]
     }
   ];

@@ -19,6 +19,7 @@ const Checkout = lazy(() => import('./components/billing/Checkout'));
 const Invoice = lazy(() => import('./components/billing/Invoice'));
 const InventoryMovements = lazy(() => import('./components/inventory/InventoryMovements'));
 const BarcodeScanner = lazy(() => import('./components/scanner/BarcodeScanner'));
+const AddProduct = lazy(() => import('./pages/Products/AddProduct'));
 const EditProduct = lazy(() => import('./components/products/EditProduct'));
 const ProductDetails = lazy(() => import('./components/products/ProductDetails'));
 const BarcodeResult = lazy(() => import('./components/scanner/BarcodeResult'));
@@ -42,10 +43,10 @@ function App() {
             {/* Protected routes */}
             <Route path="/dashboard" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
               <Route index element={<Dashboard />} />
-              <Route path="products/*" element={<Products />} />
-              <Route path="products/add" element={<EditProduct />} />
+              <Route path="products/add" element={<AddProduct />} />
               <Route path="products/edit/:id" element={<EditProduct />} />
               <Route path="products/:id" element={<ProductDetails />} />
+              <Route path="products" element={<Products />} />
               <Route path="transactions" element={
                 <Suspense fallback={<div>Loading...</div>}>
                   <Transactions />

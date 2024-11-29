@@ -60,7 +60,7 @@ const ProductSearch = ({ onProductSelect }) => {
             >
               <td>{product.name}</td>
               <td>{product.sku}</td>
-              <td>${product.price.retail.toFixed(2)}</td>
+              <td>₹{product.price.retail.toFixed(2)}</td>
               <td>
                 <Group spacing={5}>
                   <Text>{product.stockQuantity}</Text>

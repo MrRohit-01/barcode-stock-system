@@ -167,11 +167,11 @@ const Products = () => {
                 <td className="px-6 py-4">
                   <div className="flex flex-col">
                     <span className="text-sm text-gray-600">
-                      Cost: $
+                      Cost: ₹
                       {product.price?.cost ? product.price.cost.toFixed(2) : '0.00'}
                     </span>
                     <span className="text-sm text-gray-900">
-                      Retail: $
+                      Retail: ₹
                       {product.price?.retail ? product.price.retail.toFixed(2) : '0.00'}
                     </span>
                   </div>

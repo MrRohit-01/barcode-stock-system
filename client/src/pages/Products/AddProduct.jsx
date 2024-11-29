@@ -247,7 +247,7 @@ const AddProduct = () => {
         <body>
           <div class="label">
             <div class="product-name">${formData.name || 'Product'}</div>
-            <div class="product-price">$${formData.price || '0.00'}</div>
+            <div class="product-price">₹${formData.price.retail || '0.00'}</div>
             <div class="product-sku">SKU: ${formData.sku || ''}</div>
             <div class="barcode-container">
               ${barcodeRef.current.innerHTML}
@@ -386,8 +386,16 @@ const AddProduct = () => {
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
               <div className="bg-white rounded-lg w-full max-w-xl mx-4">
                 <BarcodeScanner
-                  onBarcodeDetected={handleBarcodeDetected}
                   onClose={() => setShowScanner(false)}
+                  onBarcodeScan={(barcode) => {
+                    setFormData(prev => ({
+                      ...prev,
+                      barcode: barcode
+                    }));
+                    setShowScanner(false);
+                    setShowBarcode(true);
+                    toast.success('Barcode scanned successfully!');
+                  }}
                 />
               </div>
             </div>

@@ -24,6 +24,7 @@ import {
 import { productService, billingService } from '../../services/api';
 import BarcodeScanner from '../scanner/BarcodeScanner';
 import ProductSearch from './ProductSearch';
+import { Button as MantineButton } from '@mantine/core';
 
 const Checkout = () => {
   const navigate = useNavigate();
@@ -143,18 +144,18 @@ const Checkout = () => {
             <Group mb="md" position="apart">
               <Text size="xl" weight={700}>Billing</Text>
               <Group>
-                <Button 
-                  leftIcon={<QrCodeIcon className="h-5 w-5" />}
+                <MantineButton 
+                  leftSection={<QrCodeIcon className="h-5 w-5" />}
                   onClick={() => setScannerOpen(true)}
                 >
                   Scan Barcode
-                </Button>
-                <Button 
-                  leftIcon={<MagnifyingGlassIcon className="h-5 w-5" />}
+                </MantineButton>
+                <MantineButton 
+                  leftSection={<MagnifyingGlassIcon className="h-5 w-5" />}
                   onClick={() => setSearchOpen(true)}
                 >
                   Search Products
-                </Button>
+                </MantineButton>
               </Group>
             </Group>
 
@@ -172,7 +173,7 @@ const Checkout = () => {
                 {items.map((item, index) => (
                   <tr key={item._id}>
                     <td>{item.name}</td>
-                    <td>${item.price.retail.toFixed(2)}</td>
+                    <td>₹{item.price.retail.toFixed(2)}</td>
                     <td>
                       <Group spacing={5}>
                         <NumberInput
@@ -187,7 +188,7 @@ const Checkout = () => {
                         </Badge>
                       </Group>
                     </td>
-                    <td>${(item.price.retail * item.quantity).toFixed(2)}</td>
+                    <td>₹{(item.price.retail * item.quantity).toFixed(2)}</td>
                     <td>
                       <ActionIcon color="red" onClick={() => removeItem(index)}>
                         <TrashIcon className="h-5 w-5" />
@@ -255,17 +256,33 @@ const Checkout = () => {
         </Grid.Col>
       </Grid>
 
-      {/* Barcode Scanner Modal */}
+      {/* Updated Barcode Scanner Modal */}
       <Modal
         opened={isScannerOpen}
         onClose={() => setScannerOpen(false)}
         title="Scan Barcode"
         size="xl"
+        styles={{
+          title: {
+            fontSize: '1.2rem',
+            fontWeight: 600
+          },
+          body: {
+            padding: '1rem'
+          }
+        }}
       >
-        <BarcodeScanner 
-          onClose={() => setScannerOpen(false)}
-          onScan={handleBarcodeScanned}
-        />
+        <div className="flex flex-col items-center">
+          <div className="w-full max-w-2xl aspect-video mb-4">
+            <BarcodeScanner 
+              onClose={() => setScannerOpen(false)}
+              onScan={handleBarcodeScanned}
+            />
+          </div>
+          <Text color="dimmed" size="sm" align="center">
+            Position the barcode in front of your camera
+          </Text>
+        </div>
       </Modal>
 
       {/* Product Search Modal */}

@@ -101,41 +101,73 @@ const Checkout = () => {
     setItems(updatedItems);
   };
 
+  const getSubtotal = () => {
+    return items.reduce((sum, item) => {
+      return sum + (item.price.retail * item.quantity);
+    }, 0);
+  };
+
+  const getTax = () => {
+    const subtotal = getSubtotal();
+    return subtotal * 0.18; // 18% GST
+  };
+
   const handleCheckout = async () => {
-    if (items.length === 0) {
-      toast.error('Cart is empty');
-      return;
-    }
-
-    // Validate stock quantities before proceeding
-    const invalidItems = items.filter(item => item.quantity > item.stock.quantity);
-    if (invalidItems.length > 0) {
-      toast.error(`Some items exceed available stock: ${invalidItems.map(item => item.name).join(', ')}`);
-      return;
-    }
-
     try {
+      if (items.length === 0) {
+        toast.error('Cart is empty');
+        return;
+      }
+
       setLoading(true);
-      const transaction = {
-        customer: customerInfo.name ? customerInfo : { name: 'Walk-in Customer' },
+      console.log('Starting checkout process...');
+
+      const transactionData = {
         items: items.map(item => ({
           product: item._id,
           quantity: item.quantity,
-          price: item.price.retail
+          price: item.price.retail,
+          name: item.name,
+          sku: item.sku
         })),
-        total: total,
-        paymentMethod: paymentMethod,
-        paymentStatus: 'completed'
+        customerInfo: {
+          name: customerInfo.name || 'Walk-in Customer',
+          phone: customerInfo.phone || '+9999999999',
+          email: customerInfo.email || 'anonymous@gmail.com'
+        },
+        paymentMethod,
+        total: getSubtotal() + getTax(),
+        subtotal: getSubtotal(),
+        tax: getTax()
       };
 
-      const response = await billingService.createTransaction(transaction);
-      toast.success('Transaction completed successfully');
-      navigate(`/dashboard/invoice/${response.data._id}`);
+      console.log('Transaction data:', transactionData);
+      const response = await billingService.createTransaction(transactionData);
+      console.log('Transaction response:', response);
+
+      if (response.data) {
+        toast.success('Transaction completed successfully');
+        navigate('/dashboard/transactions');
+        clearCart();
+      }
     } catch (error) {
+      console.error('Full checkout error:', error);
+      console.error('Error response:', error.response);
       toast.error(error.response?.data?.message || 'Error processing transaction');
     } finally {
       setLoading(false);
     }
+  };
+
+  const clearCart = () => {
+    setItems([]);
+    setTotal(0);
+    setCustomerInfo({
+      name: '',
+      phone: '',
+      email: ''
+    });
+    setPaymentMethod('cash');
   };
 
   return (
@@ -183,11 +215,11 @@ const Checkout = () => {
                           value={item.quantity}
                           onChange={(value) => updateQuantity(index, value)}
                           min={1}
-                          max={item.stock.quantity}
+                          max={item.stockQuantity}
                           style={{ width: 80 }}
                         />
-                        <Badge color={item.quantity <= item.stock.quantity ? 'green' : 'red'}>
-                          Stock: {item.stock.quantity}
+                        <Badge color={item.quantity <= item.stockQuantity ? 'green' : 'red'}>
+                          Stock: {item.stockQuantity}
                         </Badge>
                       </Group>
                     </td>
@@ -202,10 +234,19 @@ const Checkout = () => {
               </tbody>
             </Table>
 
-            <Group position="right" mt="md">
-              <Text size="xl" weight={700}>
-                Total: ${total.toFixed(2)}
-              </Text>
+            <Group position="right" mt="md" spacing="xl">
+              <div>
+                <Text size="sm" color="dimmed">Subtotal:</Text>
+                <Text size="lg">₹{getSubtotal().toFixed(2)}</Text>
+              </div>
+              <div>
+                <Text size="sm" color="dimmed">Tax (18%):</Text>
+                <Text size="lg">₹{getTax().toFixed(2)}</Text>
+              </div>
+              <div>
+                <Text size="sm" color="dimmed">Total:</Text>
+                <Text size="xl" weight={700}>₹{(getSubtotal() + getTax()).toFixed(2)}</Text>
+              </div>
             </Group>
           </Paper>
         </Grid.Col>
@@ -242,7 +283,11 @@ const Checkout = () => {
               label="Payment Method"
               value={paymentMethod}
               onChange={(value) => setPaymentMethod(value)}
-              data={['cash', 'credit card', 'debit card', 'mobile money']}
+              data={[
+                { value: 'cash', label: 'Cash' },
+                { value: 'card', label: 'Card' },
+                { value: 'upi', label: 'UPI' }
+              ]}
               mb="lg"
             />
 

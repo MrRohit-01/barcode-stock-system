@@ -75,7 +75,7 @@ const ProductDetails = () => {
             {product.image ? (
               <div className="relative group">
                 <img 
-                  src={`${import.meta.env.VITE_APP_URL}${product.image}`}
+                  src={`${import.meta.env.VITE_API_URL}${product.image}`}
                   alt={product.name}
                   className="w-full h-auto rounded-lg shadow-md"
                 />

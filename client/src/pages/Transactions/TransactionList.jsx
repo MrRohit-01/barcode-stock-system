@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Table, Card, Text, Group, Badge, Button } from '@mantine/core';
+import { Table, Card, Text, Group, Badge, Button, Modal } from '@mantine/core';
 import { billingService } from '../../services/api';
 
 function TransactionList() {
@@ -22,6 +22,65 @@ function TransactionList() {
   useEffect(() => {
     loadTransactions();
   }, [loadTransactions]);
+
+  const TransactionDetailsModal = ({ transaction, opened, onClose }) => {
+    if (!transaction) return null;
+    
+    return (
+      <Modal
+        opened={opened}
+        onClose={onClose}
+        title={`Transaction Details - ${transaction.transactionId}`}
+        size="lg"
+      >
+        <div className="space-y-4">
+          <div>
+            <Text weight={500}>Customer Information</Text>
+            <Text>Name: {transaction.customer?.name || 'Walk-in Customer'}</Text>
+            <Text>Phone: {transaction.customer?.phone || '+91-9999999999'}</Text>
+            <Text>Email: {transaction.customer?.email || 'anonymous@gmail.com'}</Text>
+          </div>
+
+          <div>
+            <Text weight={500}>Items</Text>
+            <Table>
+              <thead>
+                <tr>
+                  <th>Product</th>
+                  <th>Quantity</th>
+                  <th>Price</th>
+                  <th>Subtotal</th>
+                </tr>
+              </thead>
+              <tbody>
+                {transaction.items.map((item, index) => (
+                  <tr key={index}>
+                    <td>{item.name}</td>
+                    <td>{item.quantity}</td>
+                    <td>₹{item.price.toFixed(2)}</td>
+                    <td>₹{(item.price * item.quantity).toFixed(2)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          </div>
+
+          <Group position="apart">
+            <div>
+              <Text>Subtotal: ₹{transaction.subtotal.toFixed(2)}</Text>
+              <Text>Tax: ₹{transaction.tax.toFixed(2)}</Text>
+              <Text weight={500}>Total: ₹{transaction.total.toFixed(2)}</Text>
+            </div>
+            <div>
+              <Text>Payment Method: {transaction.paymentMethod.toUpperCase()}</Text>
+              <Text>Status: {transaction.status}</Text>
+              <Text>Date: {new Date(transaction.createdAt).toLocaleString()}</Text>
+            </div>
+          </Group>
+        </div>
+      </Modal>
+    );
+  };
 
   if (loading) return <Text>Loading...</Text>;
 
@@ -67,6 +126,15 @@ function TransactionList() {
           ))}
         </tbody>
       </Table>
+
+      <TransactionDetailsModal
+        transaction={selectedTransaction}
+        opened={showDetails}
+        onClose={() => {
+          setShowDetails(false);
+          setSelectedTransaction(null);
+        }}
+      />
     </Card>
   );
 }

@@ -28,7 +28,7 @@ const Dashboard = () => {
   const fetchDashboardData = useCallback(async () => {
     try {
       const response = await axios.get(
-        `${import.meta.env.VITE_APP_URL}/api/dashboard/stats`,
+        `${import.meta.env.VITE_API_URL}/api/dashboard/stats`,
         {
           headers: {
             Authorization: `Bearer ${token}`

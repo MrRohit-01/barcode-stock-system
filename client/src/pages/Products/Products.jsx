@@ -26,7 +26,7 @@ const Products = () => {
   const fetchProducts = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`${import.meta.env.VITE_APP_URL}/products`, {
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/products`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -61,7 +61,7 @@ const Products = () => {
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this product?')) {
       try {
-        await axios.delete(`${import.meta.env.VITE_APP_URL}/products/${id}`, {
+        await axios.delete(`${import.meta.env.VITE_API_URL}/products/${id}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -150,7 +150,7 @@ const Products = () => {
                 <td className="px-6 py-4">
                   {product.image ? (
                     <img
-                      src={`${import.meta.env.VITE_APP_URL}${product.image}`}
+                      src={`${import.meta.env.VITE_API_URL}${product.image}`}
                       alt={product.name}
                       className="h-12 w-12 object-cover rounded"
                     />

@@ -43,23 +43,20 @@ function App() {
             {/* Protected routes */}
             <Route path="/dashboard" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
               <Route index element={<Dashboard />} />
-              <Route path="products/add" element={<AddProduct />} />
-              <Route path="products/edit/:id" element={<EditProduct />} />
-              <Route path="products/:id" element={<ProductDetails />} />
-              <Route path="products" element={<Products />} />
-              <Route path="transactions" element={
-                <Suspense fallback={<div>Loading...</div>}>
-                  <Transactions />
-                </Suspense>
-              } />
+              <Route path="products">
+                <Route index element={<Products />} />
+                <Route path="add" element={<AddProduct />} />
+                <Route path="edit/:id" element={<EditProduct />} />
+                <Route path=":id" element={<ProductDetails />} />
+              </Route>
+              <Route path="transactions" element={<Transactions />} />
               <Route path="inventory" element={<InventoryMovements />} />
               <Route path="scanner" element={<BarcodeScanner />} />
               <Route path="scan-result" element={<BarcodeResult />} />
               <Route path="cart" element={<Cart />} />
               <Route path="pos" element={<Checkout />} />
-              <Route path="invoice/:id" element={<Invoice />} />
             </Route>
-          </Routes>
+          </Routes> 
         </Suspense>
       </BrowserRouter>
     </>

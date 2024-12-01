@@ -12,34 +12,38 @@ const BarcodeResult = () => {
     const checkBarcode = async () => {
       if (!barcode) {
         toast.error('No barcode provided');
-        navigate('/dashboard/products');
+        navigate('/dashboard/scanner');
         return;
       }
 
       try {
         const response = await productService.getByBarcode(barcode);
-        if (response.data) {
+        
+        // Check if we have valid product data
+        if (response.data && response.data._id) {
           toast.success('Product found!');
           navigate(`/dashboard/products/${response.data._id}`, {
             state: { product: response.data }
+          });
+        } else {
+          // If no valid product data, treat as not found
+          toast.info('Product not found. Redirecting to add product...');
+          navigate('/dashboard/products/add', { 
+            state: { barcode: barcode }
           });
         }
       } catch (error) {
         console.error('Error:', error);
         if (error.response?.status === 404) {
-          toast.info('Product not found. Redirecting to add product...', {
-            autoClose: 2000
+          toast.info('Product not found. Redirecting to add product...');
+          navigate('/dashboard/products/add', { 
+            state: { barcode: barcode }
           });
-          setTimeout(() => {
-            navigate('/dashboard/products/add', { 
-              state: { barcode: barcode }
-            });
-          }, 2000);
         } else {
-          toast.error('Error checking barcode. Please try again.');
+          toast.error('Error checking barcode');
           setTimeout(() => {
             navigate('/dashboard/scanner');
-          }, 2000);
+          }, 1500);
         }
       }
     };

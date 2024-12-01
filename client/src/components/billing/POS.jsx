@@ -13,18 +13,21 @@ import {
   ActionIcon,
   Badge,
   Modal,
-  Select
+  Select,
+  Divider,
+  Card
 } from '@mantine/core';
 import { 
   TrashIcon, 
-  PlusIcon, 
   QrCodeIcon, 
-  MagnifyingGlassIcon 
+  MagnifyingGlassIcon,
+  CreditCardIcon,
+  BanknotesIcon,
+  DevicePhoneMobileIcon
 } from '@heroicons/react/24/outline';
 import { productService, billingService } from '../../services/api';
 import BarcodeScanner from '../scanner/BarcodeScanner';
 import ProductSearch from './ProductSearch';
-import { Button as MantineButton } from '@mantine/core';
 
 const Checkout = () => {
   const navigate = useNavigate();
@@ -171,169 +174,225 @@ const Checkout = () => {
   };
 
   return (
-    <div className="p-4">
-      <Grid>
+    <div className="p-4 min-h-screen bg-gray-50">
+      <Grid gutter="md">
         {/* Left Side - Cart */}
-        <Grid.Col span={8}>
-          <Paper shadow="xs" p="md">
-            <Group mb="md" position="apart">
-              <Text size="xl" weight={700}>Billing</Text>
+        <Grid.Col span={{ base: 12, md: 8 }}>
+          <Card shadow="sm" radius="md" className="h-full">
+            {/* Header */}
+            <Group position="apart" mb="md" className="border-b pb-4">
+              <div>
+                <Text size="xl" weight={700} className="text-gray-800">New Sale</Text>
+                <Text size="sm" text="dimmed">Add items to cart</Text>
+              </div>
               <Group>
-                <MantineButton 
-                  leftSection={<QrCodeIcon className="h-5 w-5" />}
+                <Button 
+                  leftIcon={<QrCodeIcon className="h-5 w-5" />}
                   onClick={() => setScannerOpen(true)}
+                  variant="light"
+                  color="blue"
                 >
-                  Scan Barcode
-                </MantineButton>
-                <MantineButton 
-                  leftSection={<MagnifyingGlassIcon className="h-5 w-5" />}
+                  Scan Product
+                </Button>
+                <Button 
+                  leftIcon={<MagnifyingGlassIcon className="h-5 w-5" />}
                   onClick={() => setSearchOpen(true)}
+                  variant="light"
+                  color="gray"
                 >
                   Search Products
-                </MantineButton>
+                </Button>
               </Group>
             </Group>
 
-            <Table>
-              <thead>
-                <tr>
-                  <th>Product</th>
-                  <th>Price</th>
-                  <th>Quantity</th>
-                  <th>Subtotal</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {items.map((item, index) => (
-                  <tr key={item._id}>
-                    <td>{item.name}</td>
-                    <td>₹{item.price.retail.toFixed(2)}</td>
-                    <td>
-                      <Group spacing={5}>
-                        <NumberInput
-                          value={item.quantity}
-                          onChange={(value) => updateQuantity(index, value)}
-                          min={1}
-                          max={item.stockQuantity}
-                          style={{ width: 80 }}
-                        />
-                        <Badge color={item.quantity <= item.stockQuantity ? 'green' : 'red'}>
-                          Stock: {item.stockQuantity}
-                        </Badge>
-                      </Group>
-                    </td>
-                    <td>₹{(item.price.retail * item.quantity).toFixed(2)}</td>
-                    <td>
-                      <ActionIcon color="red" onClick={() => removeItem(index)}>
-                        <TrashIcon className="h-5 w-5" />
-                      </ActionIcon>
-                    </td>
+            {/* Cart Items */}
+            <div className="overflow-x-auto">
+              <Table striped highlightOnHover>
+                <thead>
+                  <tr>
+                    <th>Product</th>
+                    <th>Price</th>
+                    <th>Quantity</th>
+                    <th>Subtotal</th>
+                    <th width="70">Action</th>
                   </tr>
-                ))}
-              </tbody>
-            </Table>
+                </thead>
+                <tbody>
+                  {items.length === 0 ? (
+                    <tr>
+                      <td colSpan={5}>
+                        <Text align="center" color="dimmed" py="xl">
+                          Cart is empty. Add items to begin.
+                        </Text>
+                      </td>
+                    </tr>
+                  ) : (
+                    items.map((item, index) => (
+                      <tr key={item._id}>
+                        <td>
+                          <div>
+                            <Text weight={500}>{item.name}</Text>
+                            <Text size="sm" color="dimmed">SKU: {item.sku}</Text>
+                          </div>
+                        </td>
+                        <td>₹{item.price.retail.toFixed(2)}</td>
+                        <td>
+                          <Group spacing={5}>
+                            <NumberInput
+                              value={item.quantity}
+                              onChange={(value) => updateQuantity(index, value)}
+                              min={1}
+                              max={item.stockQuantity}
+                              style={{ width: 80 }}
+                              size="sm"
+                            />
+                            <Badge 
+                              color={item.quantity <= item.stockQuantity ? 'green' : 'red'}
+                              variant="light"
+                            >
+                              Stock: {item.stockQuantity}
+                            </Badge>
+                          </Group>
+                        </td>
+                        <td>₹{(item.price.retail * item.quantity).toFixed(2)}</td>
+                        <td>
+                          <ActionIcon 
+                            color="red" 
+                            onClick={() => removeItem(index)}
+                            variant="light"
+                          >
+                            <TrashIcon className="h-5 w-5" />
+                          </ActionIcon>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </Table>
+            </div>
 
-            <Group position="right" mt="md" spacing="xl">
-              <div>
-                <Text size="sm" color="dimmed">Subtotal:</Text>
-                <Text size="lg">₹{getSubtotal().toFixed(2)}</Text>
-              </div>
-              <div>
-                <Text size="sm" color="dimmed">Tax (18%):</Text>
-                <Text size="lg">₹{getTax().toFixed(2)}</Text>
-              </div>
-              <div>
-                <Text size="sm" color="dimmed">Total:</Text>
-                <Text size="xl" weight={700}>₹{(getSubtotal() + getTax()).toFixed(2)}</Text>
-              </div>
-            </Group>
-          </Paper>
+            {/* Cart Summary */}
+            <div className="mt-auto pt-4 border-t">
+              <Group position="right" spacing="xl">
+                <div>
+                  <Text size="sm" color="dimmed">Subtotal</Text>
+                  <Text size="lg" weight={500}>₹{getSubtotal().toFixed(2)}</Text>
+                </div>
+                <div>
+                  <Text size="sm" color="dimmed">Tax (18%)</Text>
+                  <Text size="lg" weight={500}>₹{getTax().toFixed(2)}</Text>
+                </div>
+                <div>
+                  <Text size="sm" color="dimmed">Total</Text>
+                  <Text size="xl" weight={700} color="blue">₹{(getSubtotal() + getTax()).toFixed(2)}</Text>
+                </div>
+              </Group>
+            </div>
+          </Card>
         </Grid.Col>
 
-        {/* Right Side - Customer Info */}
-        <Grid.Col span={4}>
-          <Paper shadow="xs" p="md">
-            <Text size="lg" weight={500} mb="md">
+        {/* Right Side - Customer Info & Payment */}
+        <Grid.Col span={{ base: 12, md: 4 }}>
+          <Card shadow="sm" radius="md">
+            <Text size="lg" weight={600} mb="md" className="border-b pb-3">
               Customer Information
             </Text>
 
-            <TextInput
-              label="Name"
-              value={customerInfo.name}
-              onChange={(e) => setCustomerInfo({ ...customerInfo, name: e.target.value })}
-              mb="sm"
-            />
+            <div className="space-y-4">
+              <TextInput
+                label="Name"
+                placeholder="Walk-in Customer"
+                value={customerInfo.name}
+                onChange={(e) => setCustomerInfo({ ...customerInfo, name: e.target.value })}
+              />
 
-            <TextInput
-              label="Phone"
-              value={customerInfo.phone}
-              onChange={(e) => setCustomerInfo({ ...customerInfo, phone: e.target.value })}
-              mb="sm"
-            />
+              <TextInput
+                label="Phone"
+                placeholder="+91 99999 99999"
+                value={customerInfo.phone}
+                onChange={(e) => setCustomerInfo({ ...customerInfo, phone: e.target.value })}
+              />
 
-            <TextInput
-              label="Email"
-              value={customerInfo.email}
-              onChange={(e) => setCustomerInfo({ ...customerInfo, email: e.target.value })}
-              mb="lg"
-            />
+              <TextInput
+                label="Email"
+                placeholder="customer@example.com"
+                value={customerInfo.email}
+                onChange={(e) => setCustomerInfo({ ...customerInfo, email: e.target.value })}
+              />
 
-            <Select
-              label="Payment Method"
-              value={paymentMethod}
-              onChange={(value) => setPaymentMethod(value)}
-              data={[
-                { value: 'cash', label: 'Cash' },
-                { value: 'card', label: 'Card' },
-                { value: 'upi', label: 'UPI' }
-              ]}
-              mb="lg"
-            />
+              <Divider my="md" label="Payment Method" labelPosition="center" />
 
-            <Button
-              fullWidth
-              size="lg"
-              onClick={handleCheckout}
-              loading={loading}
-              disabled={items.length === 0}
-            >
-              Complete Transaction
-            </Button>
-          </Paper>
+              <div className="grid grid-cols-3 gap-3">
+                {[
+                  { value: 'cash', label: 'Cash', icon: BanknotesIcon },
+                  { value: 'card', label: 'Card', icon: CreditCardIcon },
+                  { value: 'upi', label: 'UPI', icon: DevicePhoneMobileIcon },
+                ].map((method) => (
+                  <button
+                    key={method.value}
+                    onClick={() => setPaymentMethod(method.value)}
+                    className={`p-3 rounded-lg border text-center transition-all ${
+                      paymentMethod === method.value 
+                        ? 'border-blue-500 bg-blue-50 text-blue-600' 
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    <method.icon className="h-6 w-6 mx-auto mb-1" />
+                    <Text size="sm">{method.label}</Text>
+                  </button>
+                ))}
+              </div>
+
+              <Button
+                fullWidth
+                size="lg"
+                onClick={handleCheckout}
+                loading={loading}
+                disabled={items.length === 0}
+                mt="xl"
+              >
+                Complete Sale
+              </Button>
+            </div>
+          </Card>
         </Grid.Col>
       </Grid>
 
-      {/* Updated Barcode Scanner Modal */}
-      <Modal
-        opened={isScannerOpen}
-        onClose={() => setScannerOpen(false)}
-        title="Scan Barcode"
-        size="xl"
-        styles={{
-          title: {
-            fontSize: '1.2rem',
-            fontWeight: 600
-          },
-          body: {
-            padding: '1rem'
-          }
-        }}
-      >
-        <div className="flex flex-col items-center">
-          <div className="w-full w-2xl aspect-video mb-4">
-            <BarcodeScanner 
-              onClose={() => setScannerOpen(false)}
-              onScan={handleBarcodeScanned}
-            />
+      {/* Modals */}
+      
+        {isScannerOpen && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+            <div className="bg-transparent rounded-lg w-[600px]">
+              <div className="flex justify-between items-center p-4 border-b">
+                <h2 className="text-lg font-semibold">Scan Barcode</h2>
+                <button 
+                  onClick={() => {
+                    setScannerOpen(false);
+                    // Stop camera when closing
+                    if (typeof window !== 'undefined') {
+                      const videoElement = document.querySelector('video');
+                      if (videoElement && videoElement.srcObject) {
+                        videoElement.srcObject.getTracks().forEach(track => track.stop());
+                      }
+                    }
+                  }}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  ×
+                </button>
+              </div>
+              <BarcodeScanner 
+                onClose={() => setScannerOpen(false)}
+                onScan={handleBarcodeScanned}
+                style={{
+                  width: '100%',
+                  backgroundColor: '#f8f9fa'
+                }}
+              />
+            </div>
           </div>
-          <Text color="dimmed" size="sm" align="center">
-            Position the barcode in front of your camera
-          </Text>
-        </div>
-      </Modal>
+        )}
 
-      {/* Product Search Modal */}
       <Modal
         opened={isSearchOpen}
         onClose={() => setSearchOpen(false)}

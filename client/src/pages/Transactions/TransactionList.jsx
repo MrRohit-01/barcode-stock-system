@@ -85,48 +85,102 @@ function TransactionList() {
   if (loading) return <Text>Loading...</Text>;
 
   return (
-    <Card shadow="sm" p="lg">
+    <Card shadow="sm" p="xs" sm:p="lg">
       <Group position="apart" mb="md">
         <Text size="xl" weight={700}>Transactions</Text>
       </Group>
 
-      <Table>
-        <thead>
-          <tr>
-            <th>Date</th>
-            <th>Transaction ID</th>
-            <th>Customer</th>
-            <th>Items</th>
-            <th>Total</th>
-            <th>Status</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {transactions.map((transaction) => (
-            <tr key={transaction._id}>
-              <td>{new Date(transaction.createdAt).toLocaleDateString()}</td>
-              <td>{transaction._id}</td>
-              <td>{transaction.customer?.name || 'Walk-in Customer'}</td>
-              <td><Badge>{transaction.items.length} items</Badge></td>
-              <td>${transaction.total.toFixed(2)}</td>
-              <td><Badge color="green">Completed</Badge></td>
-              <td>
-                <Button 
-                  size="xs" 
-                  onClick={() => {
-                    setSelectedTransaction(transaction);
-                    setShowDetails(true);
-                  }}
-                >
-                  View Details
-                </Button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </Table>
+      {/* Mobile View */}
+      <div className="block sm:hidden">
+        {transactions.map((transaction) => (
+          <div 
+            key={transaction._id}
+            className="mb-4 p-4 bg-gray-50 rounded-lg"
+          >
+            <div className="flex justify-between items-start mb-2">
+              <div>
+                <Text size="sm" color="dimmed">Date</Text>
+                <Text>{new Date(transaction.createdAt).toLocaleDateString()}</Text>
+              </div>
+              <Badge color="green">Completed</Badge>
+            </div>
 
+            <div className="mb-2">
+              <Text size="sm" color="dimmed">Transaction ID</Text>
+              <Text>{transaction._id}</Text>
+            </div>
+
+            <div className="mb-2">
+              <Text size="sm" color="dimmed">Customer</Text>
+              <Text>{transaction.customer?.name || 'Walk-in Customer'}</Text>
+            </div>
+
+            <div className="flex justify-between items-center mb-2">
+              <div>
+                <Text size="sm" color="dimmed">Items</Text>
+                <Badge>{transaction.items.length} items</Badge>
+              </div>
+              <div>
+                <Text size="sm" color="dimmed">Total</Text>
+                <Text weight={500}>${transaction.total.toFixed(2)}</Text>
+              </div>
+            </div>
+
+            <Button 
+              fullWidth
+              size="sm"
+              onClick={() => {
+                setSelectedTransaction(transaction);
+                setShowDetails(true);
+              }}
+            >
+              View Details
+            </Button>
+          </div>
+        ))}
+      </div>
+
+      {/* Desktop Table */}
+      <div className="hidden sm:block">
+        <Table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Transaction ID</th>
+              <th>Customer</th>
+              <th>Items</th>
+              <th>Total</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {transactions.map((transaction) => (
+              <tr key={transaction._id}>
+                <td>{new Date(transaction.createdAt).toLocaleDateString()}</td>
+                <td>{transaction._id}</td>
+                <td>{transaction.customer?.name || 'Walk-in Customer'}</td>
+                <td><Badge>{transaction.items.length} items</Badge></td>
+                <td>${transaction.total.toFixed(2)}</td>
+                <td><Badge color="green">Completed</Badge></td>
+                <td>
+                  <Button 
+                    size="xs" 
+                    onClick={() => {
+                      setSelectedTransaction(transaction);
+                      setShowDetails(true);
+                    }}
+                  >
+                    View Details
+                  </Button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </Table>
+      </div>
+
+      {/* Transaction Details Modal */}
       <TransactionDetailsModal
         transaction={selectedTransaction}
         opened={showDetails}

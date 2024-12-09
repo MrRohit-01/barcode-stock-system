@@ -133,7 +133,9 @@ export const billingService = {
   getTransactionById: async (id) => {
     const response = await api.get(`/billing/transaction/${id}`);
     return response;
-  }
+  },
+
+  getDashboardStats: () => axios.get(`${API_URL}/billing/dashboard-stats`),
 };
 
 // Auth Service

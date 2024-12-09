@@ -275,7 +275,7 @@ const Checkout = () => {
             <div className="mt-auto pt-4 border-t">
               <Group position="right" spacing="xl">
                 <div>
-                  <Text size="sm" color="dimmed">Subtotal</Text>
+                  <Text size="sm" text="dimmed">Subtotal</Text>
                   <Text size="lg" weight={500}>₹{getSubtotal().toFixed(2)}</Text>
                 </div>
                 <div>

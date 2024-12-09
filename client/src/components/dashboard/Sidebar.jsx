@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   HomeIcon,
@@ -33,7 +33,7 @@ const Sidebar = () => {
       section: 'Inventory',
       items: [
         { path: '/dashboard/products', icon: CubeIcon, label: 'Products' },
-        { path: '/dashboard/categories', icon: TagIcon, label: 'Categories' },
+        // { path: '/dashboard/categories', icon: TagIcon, label: 'Categories' },
         { path: '/dashboard/scanner', icon: QrCodeIcon, label: 'Scan Products' },
       ]
     },
@@ -47,7 +47,7 @@ const Sidebar = () => {
       section: 'Settings',
       items: [
         { path: '/dashboard/settings', icon: Cog6ToothIcon, label: 'Settings' },
-        { path: '/dashboard/audit-logs', icon: ClipboardDocumentListIcon, label: 'Audit Logs' },
+        // { path: '/dashboard/audit-logs', icon: ClipboardDocumentListIcon, label: 'Audit Logs' },
       ]
     }
   ];
@@ -65,12 +65,26 @@ const Sidebar = () => {
     setIsOpen(false);
   };
 
+  // Add useEffect to toggle body scroll
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'auto';
+    }
+
+    // Cleanup function
+    return () => {
+      document.body.style.overflow = 'auto';
+    };
+  }, [isOpen]);
+
   return (
     <>
       {/* Hamburger Menu Button */}
       <button
         onClick={toggleSidebar}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-md bg-white shadow-md"
+        className="lg:hidden fixed top-4 right-4 z-50 p-2 rounded-md bg-white shadow-md"
       >
         {isOpen ? (
           <XMarkIcon className="h-6 w-6 text-gray-600" />
@@ -91,8 +105,8 @@ const Sidebar = () => {
       <aside
         className={`
           fixed top-0 left-0 h-screen bg-white border-r border-gray-200 
-          transition-transform duration-300 ease-in-out z-40
-          w-64 lg:translate-x-0
+          transition-transform duration-300 ease-in-out z-50
+          w-64 lg:translate-x-0 overflow-y-auto
           ${isOpen ? 'translate-x-0' : '-translate-x-full'}
         `}
       >

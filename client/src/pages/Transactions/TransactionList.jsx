@@ -82,114 +82,158 @@ function TransactionList() {
     );
   };
 
-  if (loading) return <Text>Loading...</Text>;
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+      </div>
+    );
+  }
 
   return (
-    <Card shadow="sm" p="xs" sm:p="lg">
-      <Group position="apart" mb="md">
-        <Text size="xl" weight={700}>Transactions</Text>
-      </Group>
+    <div className="p-1 sm:p-6">
+      <Card className="w-full overflow-hidden">
+        <Group position="apart" className="mb-4 px-3">
+          <Text size="xl" weight={700}>Transactions</Text>
+        </Group>
 
-      {/* Mobile View */}
-      <div className="block sm:hidden">
-        {transactions.map((transaction) => (
-          <div 
-            key={transaction._id}
-            className="mb-4 p-4 bg-gray-50 rounded-lg"
-          >
-            <div className="flex justify-between items-start mb-2">
-              <div>
-                <Text size="sm" color="dimmed">Date</Text>
-                <Text>{new Date(transaction.createdAt).toLocaleDateString()}</Text>
-              </div>
-              <Badge color="green">Completed</Badge>
-            </div>
-
-            <div className="mb-2">
-              <Text size="sm" color="dimmed">Transaction ID</Text>
-              <Text>{transaction._id}</Text>
-            </div>
-
-            <div className="mb-2">
-              <Text size="sm" color="dimmed">Customer</Text>
-              <Text>{transaction.customer?.name || 'Walk-in Customer'}</Text>
-            </div>
-
-            <div className="flex justify-between items-center mb-2">
-              <div>
-                <Text size="sm" color="dimmed">Items</Text>
-                <Badge>{transaction.items.length} items</Badge>
-              </div>
-              <div>
-                <Text size="sm" color="dimmed">Total</Text>
-                <Text weight={500}>${transaction.total.toFixed(2)}</Text>
-              </div>
-            </div>
-
-            <Button 
-              fullWidth
-              size="sm"
-              onClick={() => {
-                setSelectedTransaction(transaction);
-                setShowDetails(true);
-              }}
+        {/* Mobile View - Maximum width */}
+        <div className="block sm:hidden space-y-2 px-1">
+          {transactions.map((transaction) => (
+            <div 
+              key={transaction._id}
+              className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden w-full"
             >
-              View Details
-            </Button>
-          </div>
-        ))}
-      </div>
+              {/* Header Section */}
+              <div className="p-3 bg-gray-50 border-b flex justify-between items-center">
+                <div>
+                  <Text size="sm" color="dimmed">Transaction ID</Text>
+                  <Text size="sm" weight={500} className="font-mono">
+                    #{transaction._id.slice(-6)}
+                  </Text>
+                </div>
+                <Badge color="green" size="lg">Completed</Badge>
+              </div>
 
-      {/* Desktop Table */}
-      <div className="hidden sm:block">
-        <Table>
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>Transaction ID</th>
-              <th>Customer</th>
-              <th>Items</th>
-              <th>Total</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {transactions.map((transaction) => (
-              <tr key={transaction._id}>
-                <td>{new Date(transaction.createdAt).toLocaleDateString()}</td>
-                <td>{transaction._id}</td>
-                <td>{transaction.customer?.name || 'Walk-in Customer'}</td>
-                <td><Badge>{transaction.items.length} items</Badge></td>
-                <td>${transaction.total.toFixed(2)}</td>
-                <td><Badge color="green">Completed</Badge></td>
-                <td>
-                  <Button 
-                    size="xs" 
-                    onClick={() => {
-                      setSelectedTransaction(transaction);
-                      setShowDetails(true);
-                    }}
-                  >
-                    View Details
-                  </Button>
-                </td>
+              {/* Main Content */}
+              <div className="p-3 space-y-3">
+                {/* Customer & Date */}
+                <div className="flex justify-between items-start">
+                  <div>
+                    <Text size="sm" color="dimmed">Customer</Text>
+                    <Text weight={500}>
+                      {transaction.customer?.name || 'Walk-in Customer'}
+                    </Text>
+                  </div>
+                  <div className="text-right">
+                    <Text size="sm" color="dimmed">Date</Text>
+                    <Text>
+                      {new Date(transaction.createdAt).toLocaleDateString()}
+                    </Text>
+                  </div>
+                </div>
+
+                {/* Items & Total */}
+                <div className="flex justify-between items-center pt-2 border-t">
+                  <div>
+                    <Text size="sm" color="dimmed">Items</Text>
+                    <Badge size="lg" variant="outline">
+                      {transaction.items.length} items
+                    </Badge>
+                  </div>
+                  <div className="text-right">
+                    <Text size="sm" color="dimmed">Total Amount</Text>
+                    <Text size="lg" weight={700} className="text-green-600">
+                      ₹{transaction.total.toFixed(2)}
+                    </Text>
+                  </div>
+                </div>
+
+                {/* Action Button */}
+                <Button 
+                  fullWidth
+                  variant="light"
+                  className="mt-3"
+                  onClick={() => {
+                    setSelectedTransaction(transaction);
+                    setShowDetails(true);
+                  }}
+                >
+                  View Details
+                </Button>
+              </div>
+            </div>
+          ))}
+
+          {/* Empty State */}
+          {transactions.length === 0 && (
+            <div className="text-center py-8">
+              <Text color="dimmed">No transactions found</Text>
+            </div>
+          )}
+        </div>
+
+        {/* Desktop Table */}
+        <div className="hidden sm:block overflow-x-auto">
+          <Table striped highlightOnHover className="min-w-full">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">Date</th>
+                <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">Transaction ID</th>
+                <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">Customer</th>
+                <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">Items</th>
+                <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">Total</th>
+                <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">Status</th>
+                <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </Table>
-      </div>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {transactions.map((transaction) => (
+                <tr key={transaction._id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    {new Date(transaction.createdAt).toLocaleDateString()}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">{transaction._id}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    {transaction.customer?.name || 'Walk-in Customer'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <Badge>{transaction.items.length} items</Badge>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    ₹{transaction.total.toFixed(2)}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <Badge color="green">Completed</Badge>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <Button 
+                      size="xs"
+                      onClick={() => {
+                        setSelectedTransaction(transaction);
+                        setShowDetails(true);
+                      }}
+                    >
+                      View Details
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+        </div>
 
-      {/* Transaction Details Modal */}
-      <TransactionDetailsModal
-        transaction={selectedTransaction}
-        opened={showDetails}
-        onClose={() => {
-          setShowDetails(false);
-          setSelectedTransaction(null);
-        }}
-      />
-    </Card>
+        {/* Transaction Details Modal */}
+        <TransactionDetailsModal
+          transaction={selectedTransaction}
+          opened={showDetails}
+          onClose={() => {
+            setShowDetails(false);
+            setSelectedTransaction(null);
+          }}
+        />
+      </Card>
+    </div>
   );
 }
 

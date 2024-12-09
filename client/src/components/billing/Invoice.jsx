@@ -48,7 +48,7 @@ const Invoice = () => {
         </Text>
       </Group>
 
-      <Text mt="xl" size="sm" color="dimmed">
+      <Text mt="xl" size="sm" text="dimmed">
         Payment Method: {transaction.paymentMethod}
       </Text>
     </Paper>

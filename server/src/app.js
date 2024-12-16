@@ -13,7 +13,11 @@ const billingRoutes = require('./routes/billing');
 const app = express();
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: '*', // Allow requests from any origin
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Allow all these HTTP methods
+  allowedHeaders: ['Content-Type', 'Authorization'], // Allow specific headers
+}));
 app.use(express.json());
 
 // Routes

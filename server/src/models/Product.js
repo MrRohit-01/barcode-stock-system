@@ -30,15 +30,6 @@ const productSchema = new mongoose.Schema({
     },
     wholesale: Number
   },
-  stock: {
-    quantity: {
-      type: Number,
-      default: 0,
-    },
-    minQuantity: Number,
-    maxQuantity: Number,
-    location: String
-  },
   specifications: {
     weight: String,
     dimensions: String,

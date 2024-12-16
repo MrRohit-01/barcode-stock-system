@@ -12,61 +12,68 @@ const createTransaction = async (req, res) => {
   session.startTransaction();
 
   try {
-    const { items, paymentMethod } = req.body;
-    const transactionId = generateTransactionId();
+    const { items, customerInfo, paymentMethod, total, subtotal, tax } = req.body;
 
-    // Calculate total and validate stock
-    let total = 0;
-    const inventoryUpdates = [];
-    const validatedItems = [];
+    // Debug logs
+    console.log('User from request:', req.user);
+    console.log('Request body:', req.body);
 
-    for (const item of items) {
-      const product = await Product.findById(item.productId).session(session);
-      
-      if (!product) {
-        throw new Error(`Product not found: ${item.productId}`);
-      }
-      
-      if (product.stockQuantity < item.quantity) {
-        throw new Error(`Insufficient stock for ${product.name}`);
-      }
-
-      total += product.price * item.quantity;
-      
-      inventoryUpdates.push({
-        product: product._id,
-        type: 'out',
-        quantity: item.quantity,
-        reason: 'sale',
-        reference: transactionId,
-        performedBy: req.user.userId
-      });
-
-      product.stockQuantity -= item.quantity;
-      await product.save({ session });
-
-      validatedItems.push({
-        product: product._id,
-        quantity: item.quantity,
-        price: product.price
-      });
+    // Validate required fields
+    if (!items || !Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ message: 'Items are required' });
     }
 
-    const transaction = await Transaction.create([{
-      transactionId,
-      items: validatedItems,
-      total,
-      paymentMethod,
-      cashier: req.user.userId
-    }], { session });
+    if (!paymentMethod) {
+      return res.status(400).json({ message: 'Payment method is required' });
+    }
 
-    await InventoryMovement.insertMany(inventoryUpdates, { session });
+    if (!req.user || !req.user._id) {
+      return res.status(401).json({ message: 'Cashier information missing' });
+    }
+
+    // Create transaction with explicit cashier ID
+    const transaction = new Transaction({
+      items: items.map(item => ({
+        product: item.product,
+        quantity: item.quantity,
+        price: item.price,
+        name: item.name,
+        sku: item.sku
+      })),
+      total,
+      subtotal,
+      tax,
+      paymentMethod,
+      customer: customerInfo,
+      cashier: req.user._id // Explicitly set the cashier
+    });
+
+    await transaction.save({ session });
+
+    // Update product stock quantities
+    for (const item of items) {
+      await Product.findByIdAndUpdate(
+        item.product,
+        { $inc: { stockQuantity: -item.quantity } },
+        { session }
+      );
+    }
 
     await session.commitTransaction();
-    res.status(201).json(transaction[0]);
+
+    // Populate the transaction with product details
+    const populatedTransaction = await Transaction.findById(transaction._id)
+      .populate('cashier', 'username')
+      .populate('items.product');
+
+    res.status(201).json(populatedTransaction);
   } catch (error) {
     await session.abortTransaction();
-    res.status(500).json({ message: error.message });
+    console.error('Transaction creation error:', error);
+    res.status(500).json({ 
+      message: 'Error creating transaction',
+      error: error.message 
+    });
   } finally {
     session.endSession();
   }

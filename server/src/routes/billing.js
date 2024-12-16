@@ -12,12 +12,39 @@ router.post('/transaction',
 
 router.get('/transactions', 
   auth, 
-  billingController.getTransactions
+  billingController.getTransactions || ((req, res) => {
+    res.status(501).json({ message: 'Not implemented yet' });
+  })
 );
 
 router.get('/transaction/:id', 
   auth, 
-  billingController.getTransactionById
+  billingController.getTransactionById || ((req, res) => {
+    res.status(501).json({ message: 'Not implemented yet' });
+  })
+);
+
+router.get('/transactions/daily',
+  auth,
+  billingController.getDailyTransactions || ((req, res) => {
+    res.status(501).json({ message: 'Not implemented yet' });
+  })
+);
+
+router.get('/transactions/summary',
+  auth,
+  authorize('admin'),
+  billingController.getTransactionsSummary || ((req, res) => {
+    res.status(501).json({ message: 'Not implemented yet' });
+  })
+);
+
+router.post('/transaction/:id/void',
+  auth,
+  authorize('admin'),
+  billingController.voidTransaction || ((req, res) => {
+    res.status(501).json({ message: 'Not implemented yet' });
+  })
 );
 
 module.exports = router; 

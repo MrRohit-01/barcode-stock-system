@@ -26,7 +26,7 @@ const Products = () => {
   const fetchProducts = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`${import.meta.env.VITE_APP_URL}/products`, {
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/products`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -61,7 +61,7 @@ const Products = () => {
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this product?')) {
       try {
-        await axios.delete(`${import.meta.env.VITE_APP_URL}/products/${id}`, {
+        await axios.delete(`${import.meta.env.VITE_API_URL}/products/${id}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -91,42 +91,111 @@ const Products = () => {
   }
 
   return (
-    <div className="p-6">
-      <div className="mb-6 flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Products</h2>
+    <div className="p-2 sm:p-6">
+      <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <h2 className="text-xl sm:text-2xl font-bold">Products</h2>
         <Link
           to="/dashboard/products/add"
-          className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+          className="w-full sm:w-auto px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 text-center"
         >
           Add New Product
         </Link>
       </div>
 
-      <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
-          <input
-            type="text"
-            placeholder="Search products..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          />
-          <select
-            value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
-            className="px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          >
-            <option value="">All Categories</option>
-            {categories.map((category) => (
-              <option key={category} value={category}>
-                {category}
-              </option>
-            ))}
-          </select>
-        </div>
+      <div className="mb-6 flex flex-col gap-4">
+        <input
+          type="text"
+          placeholder="Search products..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        />
+        <select
+          value={selectedCategory}
+          onChange={(e) => setSelectedCategory(e.target.value)}
+          className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        >
+          <option value="">All Categories</option>
+          {categories.map((category) => (
+            <option key={category} value={category}>
+              {category}
+            </option>
+          ))}
+        </select>
       </div>
 
-      <div className="overflow-x-auto">
+      <div className="block sm:hidden">
+        {filteredProducts.map((product) => (
+          <div 
+            key={product._id}
+            className="mb-4 p-4 bg-white rounded-lg shadow"
+            onClick={() => handleProductClick(product)}
+          >
+            <div className="flex items-center gap-4 mb-2">
+              {product.image ? (
+                <img
+                  src={`${import.meta.env.VITE_API_URL}${product.image}`}
+                  alt={product.name}
+                  className="h-16 w-16 object-cover rounded"
+                />
+              ) : (
+                <div className="h-16 w-16 bg-gray-200 rounded flex items-center justify-center">
+                  No img
+                </div>
+              )}
+              <div>
+                <h3 className="font-semibold">{product.name}</h3>
+                <p className="text-sm text-gray-600">SKU: {product.sku}</p>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-2 text-sm">
+              <div>
+                <p className="text-gray-600">Barcode: {product.barcode}</p>
+                <p className="text-gray-600">Category: {product.category}</p>
+              </div>
+              <div>
+                <p className="text-gray-600">Cost: ₹{product.price?.cost?.toFixed(2)}</p>
+                <p>Retail: ₹{product.price?.retail?.toFixed(2)}</p>
+              </div>
+            </div>
+            
+            <div className="mt-4 flex justify-between items-center">
+              <span
+                className={`px-2 py-1 rounded-full text-sm ${
+                  product.stockQuantity <= product.minStockLevel
+                    ? 'bg-red-100 text-red-800'
+                    : 'bg-green-100 text-green-800'
+                }`}
+              >
+                Stock: {product.stockQuantity}
+              </span>
+              <div className="flex gap-2">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(`/dashboard/products/edit/${product._id}`);
+                  }}
+                  className="p-2 text-indigo-600 hover:bg-indigo-50 rounded"
+                >
+                  <PencilIcon className="h-5 w-5" />
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDelete(product._id);
+                  }}
+                  className="p-2 text-red-600 hover:bg-red-50 rounded"
+                >
+                  <TrashIcon className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="hidden sm:block overflow-x-auto">
         <table className="min-w-full bg-white rounded-lg overflow-hidden shadow-md">
           <thead className="bg-gray-100">
             <tr>
@@ -150,7 +219,7 @@ const Products = () => {
                 <td className="px-6 py-4">
                   {product.image ? (
                     <img
-                      src={`${import.meta.env.VITE_APP_URL}${product.image}`}
+                      src={`${import.meta.env.VITE_API_URL}${product.image}`}
                       alt={product.name}
                       className="h-12 w-12 object-cover rounded"
                     />
@@ -167,11 +236,11 @@ const Products = () => {
                 <td className="px-6 py-4">
                   <div className="flex flex-col">
                     <span className="text-sm text-gray-600">
-                      Cost: $
+                      Cost: ₹
                       {product.price?.cost ? product.price.cost.toFixed(2) : '0.00'}
                     </span>
                     <span className="text-sm text-gray-900">
-                      Retail: $
+                      Retail: ₹
                       {product.price?.retail ? product.price.retail.toFixed(2) : '0.00'}
                     </span>
                   </div>

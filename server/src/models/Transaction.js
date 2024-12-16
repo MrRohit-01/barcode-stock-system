@@ -13,24 +13,34 @@ const transactionItemSchema = new mongoose.Schema({
   price: {
     type: Number,
     required: true
-  }
+  },
+  name: String,
+  sku: String
 });
 
 const transactionSchema = new mongoose.Schema({
   transactionId: {
     type: String,
     required: true,
-    unique: true
+    unique: true,
+    default: () => 'TXN' + Date.now()
   },
   items: [transactionItemSchema],
   total: {
     type: Number,
     required: true
   },
+  subtotal: Number,
+  tax: Number,
   paymentMethod: {
     type: String,
     enum: ['cash', 'card', 'upi'],
     required: true
+  },
+  customer: {
+    name: String,
+    phone: String,
+    email: String
   },
   cashier: {
     type: mongoose.Schema.Types.ObjectId,
@@ -42,6 +52,10 @@ const transactionSchema = new mongoose.Schema({
     enum: ['completed', 'cancelled', 'refunded'],
     default: 'completed'
   }
-}, { timestamps: true });
+}, { 
+  timestamps: true,
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true }
+});
 
 module.exports = mongoose.model('Transaction', transactionSchema); 

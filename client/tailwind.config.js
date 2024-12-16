@@ -54,7 +54,16 @@ export default {
   			lg: 'var(--radius)',
   			md: 'calc(var(--radius) - 2px)',
   			sm: 'calc(var(--radius) - 4px)'
-  		}
+  		},
+  		keyframes: {
+  			scan: {
+  				'0%': { transform: 'translateY(0)' },
+  				'100%': { transform: 'translateY(256px)' }, // 64 * 4 = 256px (height of scanner box)
+  			},
+  		},
+  		animation: {
+  			scan: 'scan 2s linear infinite',
+  		},
   	}
   },
   plugins: [require("tailwindcss-animate")],

@@ -1,96 +1,60 @@
 import { useZxing } from "react-zxing";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { toast } from "react-toastify";
 import PropTypes from 'prop-types';
-import { useNavigate } from 'react-router-dom';
-import { productService } from '../../services/api';
+import { useNavigate, useLocation } from 'react-router-dom';
 
-const BarcodeScanner = ({ onClose }) => {
+const BarcodeScanner = ({ onScan, onClose }) => {
   const navigate = useNavigate();
-  const [error, setError] = useState(null);
-  const [isScanning, setIsScanning] = useState(true);
+  const location = useLocation();
+  const isPOS = location.pathname === '/dashboard/pos';
+  const [lastScanned, setLastScanned] = useState('');
+  const [scanTimeout, setScanTimeout] = useState(null);
 
-  const handleBarcodeScan = async (barcodeValue) => {
-    if (!barcodeValue) {
-      setIsScanning(true); // Continue scanning if no barcode
-      return;
-    }
+  const handleSuccessfulScan = useCallback((barcode) => {
+    // Prevent duplicate scans within 2 seconds
+    if (lastScanned === barcode) return;
+    
+    // Clear any existing timeout
+    if (scanTimeout) clearTimeout(scanTimeout);
+    
+    setLastScanned(barcode);
+    console.log("Scanned:", barcode);
+    
+    // Reset last scanned after 2 seconds
+    const timeout = setTimeout(() => setLastScanned(''), 2000);
+    setScanTimeout(timeout);
 
-    try {
-      const response = await productService.getByBarcode(barcodeValue);
-      
-      // Close the scanner
+    if (isPOS) {
+      onScan(barcode);
       if (onClose) onClose();
-      
-      if (response.data) {
-        // Product exists
-        toast.success('Product found! Redirecting...', {
-          position: "top-right",
-          autoClose: 2000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-        });
-        
-        navigate(`/dashboard/products/${response.data._id}`, {
-          state: { product: response.data }
-        });
-      }
-    } catch (err) {
-      console.error('API error:', err);
-      
-      // Check if it's a 404 error (product not found)
-      if (err.response?.status === 404) {
-        // Close the scanner
-        if (onClose) onClose();
-        
-        toast.info('New product detected! Opening add form...', {
-          position: "top-right",
-          autoClose: 2000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-        });
-        
-        navigate('/dashboard/products/add', {
-          state: { barcode: barcodeValue }
-        });
-      } else {
-        // For other errors, continue scanning
-        setIsScanning(true);
-        toast.error('Error checking product. Please try again.', {
-          position: "top-right",
-          autoClose: 2000,
-        });
-      }
+    } else {
+      navigate('/dashboard/scan-result', { 
+        state: { barcode }
+      });
+      toast.success('Barcode captured!');
     }
-  };
+  }, [lastScanned, scanTimeout, isPOS, onScan, onClose, navigate]);
 
   const { ref } = useZxing({
     onDecodeResult(result) {
-      if (isScanning) {
-        const barcodeValue = result.getText();
-        handleBarcodeScan(barcodeValue);
-      }
+      handleSuccessfulScan(result.getText());
     },
     onError(error) {
-      // Only log NotFoundException, don't show to user
+      // Only log non-NotFound errors
       if (error.name !== 'NotFoundException') {
         console.error("Scanner error:", error);
       }
-      // Continue scanning regardless of error
-      setIsScanning(true);
     },
     constraints: {
       video: {
         facingMode: "environment",
-        width: { min: 640, ideal: 1280, max: 1920 },
-        height: { min: 480, ideal: 720, max: 1080 }
+        width: { ideal: 1280 },
+        height: { ideal: 720 },
+        frameRate: { ideal: 30 }
       }
     },
-    timeBetweenDecodingAttempts: 300,
+    timeBetweenDecodingAttempts: 150, // Faster scanning attempts
     formats: ["EAN_13", "EAN_8", "CODE_128", "CODE_39", "UPC_A", "UPC_E"],
     tryHarder: true
   });
@@ -114,10 +78,8 @@ const BarcodeScanner = ({ onClose }) => {
           <video
             ref={ref}
             className="w-full h-full object-cover"
-            autoPlay
-            playsInline
-            muted
           />
+          {/* Scanning guide overlay */}
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="w-64 h-32 border-2 border-red-500 rounded-lg">
               <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-red-500"></div>
@@ -128,22 +90,8 @@ const BarcodeScanner = ({ onClose }) => {
           </div>
         </div>
 
-        {error && (
-          <div className="mt-4 p-3 bg-red-100 text-red-700 rounded-lg">
-            {error}
-          </div>
-        )}
-
-        <div className="mt-4 space-y-2">
-          <p className="text-center text-sm text-gray-600">
-            Position the barcode within the frame
-          </p>
-          <ul className="text-xs text-gray-500 list-disc pl-4">
-            <li>Hold the barcode steady</li>
-            <li>Ensure good lighting</li>
-            <li>Avoid glare or reflections</li>
-            <li>Try different distances (6-12 inches works best)</li>
-          </ul>
+        <div className="mt-4 text-center text-sm text-gray-600">
+          Position barcode within frame
         </div>
       </div>
     </div>
@@ -151,6 +99,7 @@ const BarcodeScanner = ({ onClose }) => {
 };
 
 BarcodeScanner.propTypes = {
+  onScan: PropTypes.func,
   onClose: PropTypes.func,
 };
 

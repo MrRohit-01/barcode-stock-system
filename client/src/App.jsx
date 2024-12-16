@@ -15,12 +15,14 @@ const Register = lazy(() => import('./components/auth/Register'));
 const Products = lazy(() => import('./pages/Products/Products'));
 const Transactions = lazy(() => import('./pages/Transactions/TransactionList'));
 const Cart = lazy(() => import('./components/billing/Cart'));
-const Checkout = lazy(() => import('./components/billing/Checkout'));
+const Checkout = lazy(() => import('./components/billing/POS'));
 const Invoice = lazy(() => import('./components/billing/Invoice'));
 const InventoryMovements = lazy(() => import('./components/inventory/InventoryMovements'));
 const BarcodeScanner = lazy(() => import('./components/scanner/BarcodeScanner'));
+const AddProduct = lazy(() => import('./pages/Products/AddProduct'));
 const EditProduct = lazy(() => import('./components/products/EditProduct'));
 const ProductDetails = lazy(() => import('./components/products/ProductDetails'));
+const BarcodeResult = lazy(() => import('./components/scanner/BarcodeResult'));
 
 function App() {
   return (
@@ -41,22 +43,20 @@ function App() {
             {/* Protected routes */}
             <Route path="/dashboard" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
               <Route index element={<Dashboard />} />
-              <Route path="products/*" element={<Products />} />
-              <Route path="products/add" element={<EditProduct />} />
-              <Route path="products/edit/:id" element={<EditProduct />} />
-              <Route path="products/:id" element={<ProductDetails />} />
-              <Route path="transactions" element={
-                <Suspense fallback={<div>Loading...</div>}>
-                  <Transactions />
-                </Suspense>
-              } />
+              <Route path="products">
+                <Route index element={<Products />} />
+                <Route path="add" element={<AddProduct />} />
+                <Route path="edit/:id" element={<EditProduct />} />
+                <Route path=":id" element={<ProductDetails />} />
+              </Route>
+              <Route path="transactions" element={<Transactions />} />
               <Route path="inventory" element={<InventoryMovements />} />
               <Route path="scanner" element={<BarcodeScanner />} />
+              <Route path="scan-result" element={<BarcodeResult />} />
               <Route path="cart" element={<Cart />} />
-              <Route path="checkout" element={<Checkout />} />
-              <Route path="invoice/:id" element={<Invoice />} />
+              <Route path="pos" element={<Checkout />} />
             </Route>
-          </Routes>
+          </Routes> 
         </Suspense>
       </BrowserRouter>
     </>

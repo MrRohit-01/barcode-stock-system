@@ -75,7 +75,7 @@ const ProductDetails = () => {
             {product.image ? (
               <div className="relative group">
                 <img 
-                  src={`${import.meta.env.VITE_APP_URL}${product.image}`}
+                  src={`${import.meta.env.VITE_API_URL}${product.image}`}
                   alt={product.name}
                   className="w-full h-auto rounded-lg shadow-md"
                 />
@@ -111,10 +111,10 @@ const ProductDetails = () => {
                 
                 <div>
                   <p className="text-gray-600">
-                    <span className="font-semibold">Cost Price:</span> ${product.price?.cost?.toFixed(2)}
+                    <span className="font-semibold">Cost Price:</span> ₹{product.price?.cost?.toFixed(2)}
                   </p>
                   <p className="text-gray-600">
-                    <span className="font-semibold">Retail Price:</span> ${product.price?.retail?.toFixed(2)}
+                    <span className="font-semibold">Retail Price:</span> ₹{product.price?.retail?.toFixed(2)}
                   </p>
                   <p className="text-gray-600">
                     <span className="font-semibold">Stock:</span> {product.stockQuantity}

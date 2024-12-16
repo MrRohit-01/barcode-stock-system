@@ -1,14 +1,14 @@
 const { Router } = require('express');
 const Product = require('../models/Product');
-const { auth, authorize } = require('../middleware/auth');
+const { auth } = require('../middleware/auth');
 const { generateBarcode } = require('../utils/barcodeGenerator');
 const upload = require('../middleware/upload');
 
 const router = Router();
 
-router.post('/', auth, authorize(['admin', 'staff']), upload.single('image'), async (req, res) => {
+router.post('/', auth, async (req, res) => {
   try {
-    const { 
+    const {
       name, 
       sku, 
       barcode, 
@@ -20,6 +20,7 @@ router.post('/', auth, authorize(['admin', 'staff']), upload.single('image'), as
     } = req.body;
     
     console.log('Received data:', req.body);
+    console.log('User attempting creation:', req.user);
     
     // Validate required fields including barcode
     if (!name || !sku || !price || !category || !barcode) {
@@ -49,11 +50,8 @@ router.post('/', auth, authorize(['admin', 'staff']), upload.single('image'), as
 
     res.status(201).json(product);
   } catch (error) {
-    console.error('Error creating product:', error);
-    res.status(500).json({ 
-      message: 'Error creating product', 
-      error: error.message 
-    });
+    console.error('Product creation error:', error);
+    res.status(500).json({ message: 'Error creating product', error: error.message });
   }
 });
 
@@ -78,7 +76,7 @@ router.get('/barcode/:barcode', auth, async (req, res) => {
   }
 });
 
-router.put('/:id', auth, authorize(['admin', 'staff']), upload.single('image'), async (req, res) => {
+router.put('/:id', auth, async (req, res) => {
   try {
     const updateData = { ...req.body };
     if (req.file) {
@@ -101,7 +99,7 @@ router.put('/:id', auth, authorize(['admin', 'staff']), upload.single('image'), 
   }
 });
 
-router.delete('/:id', auth, authorize(['admin', 'staff']), async (req, res) => {
+router.delete('/:id', auth, async (req, res) => {
   try {
     const product = await Product.findByIdAndDelete(req.params.id);
     if (!product) {

@@ -247,7 +247,7 @@ const AddProduct = () => {
         <body>
           <div class="label">
             <div class="product-name">${formData.name || 'Product'}</div>
-            <div class="product-price">$${formData.price || '0.00'}</div>
+            <div class="product-price">₹${formData.price.retail || '0.00'}</div>
             <div class="product-sku">SKU: ${formData.sku || ''}</div>
             <div class="barcode-container">
               ${barcodeRef.current.innerHTML}
@@ -355,7 +355,7 @@ const AddProduct = () => {
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Barcode *
             </label>
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <input
                 type="text"
                 name="barcode"
@@ -365,20 +365,22 @@ const AddProduct = () => {
                 className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500"
                 placeholder="Enter barcode"
               />
-              <button
-                type="button"
-                onClick={generateBarcode}
-                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 flex-shrink-0 whitespace-nowrap"
-              >
-                Generate Barcode
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowScanner(true)}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
-              >
-                Scan Barcode
-              </button>
+              <div className="flex gap-2 sm:flex-shrink-0">
+                <button
+                  type="button"
+                  onClick={generateBarcode}
+                  className="flex-1 sm:flex-none px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 whitespace-nowrap text-sm"
+                >
+                  Generate
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowScanner(true)}
+                  className="flex-1 sm:flex-none px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 text-sm"
+                >
+                  Scan
+                </button>
+              </div>
             </div>
           </div>
 
@@ -386,8 +388,16 @@ const AddProduct = () => {
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
               <div className="bg-white rounded-lg w-full max-w-xl mx-4">
                 <BarcodeScanner
-                  onBarcodeDetected={handleBarcodeDetected}
                   onClose={() => setShowScanner(false)}
+                  onBarcodeScan={(barcode) => {
+                    setFormData(prev => ({
+                      ...prev,
+                      barcode: barcode
+                    }));
+                    setShowScanner(false);
+                    setShowBarcode(true);
+                    toast.success('Barcode scanned successfully!');
+                  }}
                 />
               </div>
             </div>

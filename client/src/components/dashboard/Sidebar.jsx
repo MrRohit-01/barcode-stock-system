@@ -1,15 +1,17 @@
+import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   HomeIcon,
   CubeIcon,
-  ShoppingCartIcon,
   DocumentTextIcon,
   QrCodeIcon,
-  TruckIcon,
-  UsersIcon,
   Cog6ToothIcon,
   ArrowRightOnRectangleIcon,
-  ChartBarIcon
+  CurrencyDollarIcon,
+  TagIcon,
+  ClipboardDocumentListIcon,
+  Bars3Icon,
+  XMarkIcon
 } from '@heroicons/react/24/outline';
 import { useAuthStore } from '../../stores/authStore';
 
@@ -17,35 +19,35 @@ const Sidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const logout = useAuthStore((state) => state.logout);
-  
+  const [isOpen, setIsOpen] = useState(false);
+
   const menuItems = [
     { 
       section: 'Main',
       items: [
         { path: '/dashboard', icon: HomeIcon, label: 'Dashboard' },
-        { path: '/dashboard/cart', icon: ShoppingCartIcon, label: 'New Sale' },
+        { path: '/dashboard/pos', icon: CurrencyDollarIcon, label: 'Point of Sale' },
       ]
     },
     {
       section: 'Inventory',
       items: [
         { path: '/dashboard/products', icon: CubeIcon, label: 'Products' },
-        { path: '/dashboard/inventory', icon: TruckIcon, label: 'Stock Movement' },
+        // { path: '/dashboard/categories', icon: TagIcon, label: 'Categories' },
         { path: '/dashboard/scanner', icon: QrCodeIcon, label: 'Scan Products' },
       ]
     },
     {
-      section: 'Reports',
+      section: 'Sales',
       items: [
         { path: '/dashboard/transactions', icon: DocumentTextIcon, label: 'Transactions' },
-        { path: '/dashboard/reports', icon: ChartBarIcon, label: 'Reports' },
       ]
     },
     {
-      section: 'Administration',
+      section: 'Settings',
       items: [
-        { path: '/dashboard/users', icon: UsersIcon, label: 'Users' },
         { path: '/dashboard/settings', icon: Cog6ToothIcon, label: 'Settings' },
+        // { path: '/dashboard/audit-logs', icon: ClipboardDocumentListIcon, label: 'Audit Logs' },
       ]
     }
   ];
@@ -55,45 +57,102 @@ const Sidebar = () => {
     navigate('/login');
   };
 
-  return (
-    <aside className="w-64 h-screen bg-white border-r border-gray-200 flex flex-col fixed">
-      <div className="p-6 border-b border-gray-200">
-        <h1 className="text-xl font-bold text-gray-800">Inventory System</h1>
-      </div>
-      
-      <nav className="flex-1 overflow-y-auto py-4">
-        {menuItems.map((section, index) => (
-          <div key={index} className="mb-6">
-            <h2 className="px-6 mb-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-              {section.section}
-            </h2>
-            {section.items.map((item) => (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`flex items-center px-6 py-3 text-gray-700 hover:bg-gray-100 transition-colors ${
-                  location.pathname === item.path ? 'bg-gray-100 border-l-4 border-indigo-500' : ''
-                }`}
-              >
-                <item.icon className="w-5 h-5 mr-3" />
-                <span className="font-medium">{item.label}</span>
-              </Link>
-            ))}
-          </div>
-        ))}
-      </nav>
+  const toggleSidebar = () => {
+    setIsOpen(!isOpen);
+  };
 
-      {/* User section at bottom */}
-      <div className="border-t border-gray-200 p-4">
-        <button
-          onClick={handleLogout}
-          className="flex items-center w-full px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-        >
-          <ArrowRightOnRectangleIcon className="w-5 h-5 mr-3" />
-          <span className="font-medium">Logout</span>
-        </button>
+  const closeSidebar = () => {
+    setIsOpen(false);
+  };
+
+  // Add useEffect to toggle body scroll
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'auto';
+    }
+
+    // Cleanup function
+    return () => {
+      document.body.style.overflow = 'auto';
+    };
+  }, [isOpen]);
+
+  return (
+    <>
+      {/* Hamburger Menu Button */}
+      <button
+        onClick={toggleSidebar}
+        className="lg:hidden fixed top-4 right-4 z-50 p-2 rounded-md bg-white shadow-md"
+      >
+        {isOpen ? (
+          <XMarkIcon className="h-6 w-6 text-gray-600" />
+        ) : (
+          <Bars3Icon className="h-6 w-6 text-gray-600" />
+        )}
+      </button>
+
+      {/* Overlay */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          onClick={closeSidebar}
+        />
+      )}
+
+      {/* Sidebar */}
+      <aside
+        className={`
+          fixed top-0 left-0 h-screen bg-white border-r border-gray-200 
+          transition-transform duration-300 ease-in-out z-50
+          w-64 lg:translate-x-0 overflow-y-auto
+          ${isOpen ? 'translate-x-0' : '-translate-x-full'}
+        `}
+      >
+        <div className="p-6 border-b border-gray-200">
+          <h1 className="text-xl font-bold text-gray-800">Inventory System</h1>
+        </div>
+        
+        <nav className="flex-1 overflow-y-auto py-4">
+          {menuItems.map((section, index) => (
+            <div key={index} className="mb-6">
+              <h2 className="px-6 mb-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                {section.section}
+              </h2>
+              {section.items.map((item) => (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  onClick={closeSidebar}
+                  className={`flex items-center px-6 py-3 text-gray-700 hover:bg-gray-100 transition-colors ${
+                    location.pathname === item.path ? 'bg-gray-100 border-l-4 border-indigo-500' : ''
+                  }`}
+                >
+                  <item.icon className="w-5 h-5 mr-3" />
+                  <span className="font-medium">{item.label}</span>
+                </Link>
+              ))}
+            </div>
+          ))}
+        </nav>
+
+        <div className="border-t border-gray-200 p-4">
+          <button
+            onClick={handleLogout}
+            className="flex items-center w-full px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+          >
+            <ArrowRightOnRectangleIcon className="w-5 h-5 mr-3" />
+            <span className="font-medium">Logout</span>
+          </button>
+        </div>
+      </aside>
+
+      {/* Main Content Wrapper */}
+      <div className={`lg:ml-64 transition-margin duration-300 ease-in-out ${isOpen ? 'ml-64' : 'ml-0'}`}>
+        {/* Your main content goes here */}
       </div>
-    </aside>
+    </>
   );
 };
 

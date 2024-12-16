@@ -4,44 +4,50 @@ import path from 'path';
 
 export default defineConfig({
   plugins: [react()],
-  optimizeDeps: {
-    include: ['@heroicons/react/24/outline'],
-  },
   build: {
+    outDir: 'dist',
+    sourcemap: false,
+    chunkSizeWarningLimit: 1000,
     rollupOptions: {
       output: {
-        manualChunks: (id) => {
-          if (id.includes('node_modules')) {
-            // Group all icon-related packages together
-            if (id.includes('@heroicons/react')) {
-              return 'vendor-icons';
-            }
-            if (id.includes('react')) {
-              return 'vendor-react';
-            }
-            return 'vendor'; // all other node_modules
-          }
-          // Group by feature
-          if (id.includes('/components/dashboard/')) {
-            return 'dashboard';
-          }
-          if (id.includes('/components/products/')) {
-            return 'products';
-          }
+        manualChunks: {
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          'vendor-ui': ['@mantine/core', '@mantine/hooks', '@mantine/form'],
+          'vendor-icons': ['@heroicons/react/24/outline', '@heroicons/react/24/solid'],
+          'vendor-utils': ['axios', 'react-toastify', 'zustand', '@tanstack/react-query'],
         },
       },
     },
-  },
-  server: {
-    // Add server configuration to handle more concurrent requests
-    maxConcurrentRequests: 500,
-    fs: {
-      strict: false
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: true,
+        drop_debugger: true
+      }
     }
+  },
+  optimizeDeps: {
+    include: [
+      'react',
+      'react-dom',
+      'react-router-dom',
+      '@heroicons/react/24/outline',
+      '@mantine/core',
+      '@mantine/hooks'
+    ]
   },
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src'),
-    },
+      '@': path.resolve(__dirname, './src')
+    }
   },
+  server: {
+    proxy: {
+      '/api': {
+        target: process.env.VITE_API_URL || 'http://localhost:5000',
+        changeOrigin: true,
+        secure: false
+      }
+    }
+  }
 });

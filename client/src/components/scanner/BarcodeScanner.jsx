@@ -1,5 +1,5 @@
 import { useZxing } from "react-zxing";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { toast } from "react-toastify";
 import PropTypes from 'prop-types';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -10,6 +10,10 @@ const BarcodeScanner = ({ onScan, onClose }) => {
   const isPOS = location.pathname === '/dashboard/pos';
   const [lastScanned, setLastScanned] = useState('');
   const [scanTimeout, setScanTimeout] = useState(null);
+
+  useEffect(() => {
+    navigate(location.pathname, { replace: true, state: {} });
+  }, [navigate, location.pathname]);
 
   const handleSuccessfulScan = useCallback((barcode) => {
     // Prevent duplicate scans within 2 seconds

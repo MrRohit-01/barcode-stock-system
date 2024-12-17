@@ -1,4 +1,3 @@
-
 import { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { productService } from '../../services/api';
@@ -13,24 +12,24 @@ const BarcodeResult = () => {
     const checkBarcode = async () => {
       if (!barcode) {
         toast.error('No barcode provided');
-        navigate('/dashboard/scanner');
+        navigate('/dashboard/scanner', { replace: true, state: {} });
         return;
       }
 
       try {
         const response = await productService.getByBarcode(barcode);
         
-        // Check if we have valid product data
         if (response.data && response.data._id) {
           toast.success('Product found!');
           navigate(`/dashboard/products/${response.data._id}`, {
-            state: { product: response.data }
+            state: { product: response.data },
+            replace: true
           });
         } else {
-          // If no valid product data, treat as not found
           toast.info('Product not found. Redirecting to add product...');
           navigate('/dashboard/products/add', { 
-            state: { barcode: barcode }
+            state: { barcode: barcode },
+            replace: true
           });
         }
       } catch (error) {
@@ -38,13 +37,15 @@ const BarcodeResult = () => {
         if (error.response?.status === 404) {
           toast.info('Product not found. Redirecting to add product...');
           navigate('/dashboard/products/add', { 
-            state: { barcode: barcode }
+            state: { barcode: barcode },
+            replace: true
           });
         } else {
           toast.error('Error checking barcode');
-          setTimeout(() => {
-            navigate('/dashboard/scanner');
-          }, 1500);
+          navigate('/dashboard/scanner', { 
+            replace: true,
+            state: {}
+          });
         }
       }
     };

@@ -36,6 +36,34 @@ const Login = () => {
     }
   };
 
+  const handleGuestLogin = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError('');
+
+    const guestCredentials = {
+      email: 'test@gmail.com',
+      password: '123456789'
+    };
+
+    try {
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_URL}/auth/login`, 
+        guestCredentials
+      );
+      
+      setToken(response.data.token);
+      setUser(response.data.user);
+      
+      navigate('/dashboard');
+    } catch (err) {
+      console.error(err);
+      setError(err.response?.data?.message || 'Guest login failed');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
@@ -94,6 +122,17 @@ const Login = () => {
             </div>
           </form>
 
+          <div className="mt-4">
+            <button 
+              type="button" 
+              onClick={handleGuestLogin}
+              className="w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-gray-500 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+              disabled={isLoading}
+            >
+              {isLoading ? 'Signing in...' : 'Login as Guest'}
+            </button>
+          </div>
+
           <div className="mt-6">
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
@@ -121,4 +160,4 @@ const Login = () => {
   );
 };
 
-export default Login; 
+export default Login;

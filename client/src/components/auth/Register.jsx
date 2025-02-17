@@ -43,6 +43,23 @@ const Register = () => {
     }
   };
 
+  const handleGuestLogin = async (e) => {
+    e.preventDefault();
+  
+    const guestCredentials = {
+      email: 'test@gmail.com',
+      password: '123456789'
+    };
+  
+    try {
+      const response = await axios.post(`${import.meta.env.VITE_API_URL}/auth/login`, guestCredentials);
+      toast.success('Logged in as guest!');
+      navigate('/dashboard');
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Guest login failed!');
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-lg shadow-md">
@@ -112,6 +129,15 @@ const Register = () => {
               className="w-full flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
             >
               Register
+            </button>
+          </div>
+          <div className="mt-4">
+            <button
+              type="button"
+              onClick={handleGuestLogin}
+              className="w-full flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-gray-500 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+            >
+              Login as Guest
             </button>
           </div>
         </form>

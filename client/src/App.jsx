@@ -1,7 +1,9 @@
-import { Suspense, lazy } from 'react';
+import { Suspense, lazy, useEffect } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { wakeupServer } from './utils/wakeupServer';
+import ConnectionStatus from './components/ConnectionStatus';
 
 // Auth components (direct import for critical path)
 import PublicRoute from './components/auth/PublicRoute';
@@ -25,9 +27,19 @@ const ProductDetails = lazy(() => import('./components/products/ProductDetails')
 const BarcodeResult = lazy(() => import('./components/scanner/BarcodeResult'));
 
 function App() {
+  useEffect(() => {
+    // Add a small delay of 100ms
+    const timer = setTimeout(() => {
+      wakeupServer();
+    }, 10);
+
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <>
       <ToastContainer />
+      <ConnectionStatus />
       <BrowserRouter>
         <Suspense fallback={
           <div className="flex items-center justify-center h-screen">

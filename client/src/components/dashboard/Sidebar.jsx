@@ -46,7 +46,7 @@ const Sidebar = () => {
     {
       section: 'Settings',
       items: [
-        { path: '/dashboard/settings', icon: Cog6ToothIcon, label: 'Settings' },
+        { icon: Cog6ToothIcon, label: 'Settings' },
         // { path: '/dashboard/audit-logs', icon: ClipboardDocumentListIcon, label: 'Audit Logs' },
       ]
     }

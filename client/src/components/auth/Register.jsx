@@ -53,6 +53,11 @@ const Register = () => {
   
     try {
       const response = await axios.post(`${import.meta.env.VITE_API_URL}/auth/login`, guestCredentials);
+      const { token } = response.data;
+
+      // Store the token in localStorage
+      localStorage.setItem('authToken', token);
+
       toast.success('Logged in as guest!');
       navigate('/dashboard');
     } catch (error) {

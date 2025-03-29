@@ -21,7 +21,7 @@ app.use(cors({
 app.use(express.json());
 
 // Add this before your routes
-app.get('/api/wake-up', (req, res) => {
+app.get('/', (req, res) => {
   res.json({ message: 'Backend is up and running!' });
 });
 
